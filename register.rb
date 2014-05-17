@@ -62,6 +62,10 @@ class Register
     return @bitfield.data(@size)
   end
 
+  def packed
+    return @bitfield.packed(@size)
+  end
+
   def [](index)
     if 0 <= index < @size
       return @bitfield[index]
