@@ -12,6 +12,18 @@ class Pointer
     return sprintf("ptr:%0#10x", @addr)
   end
 
+  def -(bytes)
+    @addr -= bytes
+
+    return self
+  end
+
+  def +(bytes)
+    @addr += bytes
+
+    return self
+  end
+
   def read(size)
     return @@mem.get(@addr, size)
   end
@@ -32,7 +44,7 @@ class Memory
     if bytes == 0
       return Pointer.new(self, addr)
     else
-      return (addr...(addr+bytes)).map { |addr| @data[addr] }.pack('L*')
+      return (addr...(addr+bytes)).map { |addr| @data[addr] }.join
     end
   end
 
@@ -40,7 +52,15 @@ class Memory
   def set(addr, data, size)
     wrote = 0
 
-    data.each_byte do |byte|
+    #. Convert integer to string first
+    case data
+      when Integer
+        data = [data & @arch.mask].pack('V*')
+      when Register
+        data = [data.bits & @arch.mask].pack('V*')
+    end
+
+    data.each_char do |byte|
       if wrote < size then
         @data[addr + wrote] = byte
         wrote += 1
@@ -54,21 +74,27 @@ class Memory
 end
 
 class Stack
+  attr_reader :base, :stack
+
   def initialize(arch, mem)
-    @arch = arch
-    @mask = (@arch.bits << 1) - 1
-    @mem = mem
-    @base = @mem[0xFFFF0000]
+    @arch  = arch
+    @mask  = (@arch.bits << 1) - 1
+    @mem   = mem
+    @base  = @mem[0xFFFF0000]
     @stack = @mem[0xFFFF0000]
   end
 
   def push(data)
-    @stack.write(data & @mask)
-    @stack += @arch.bytes
+    @stack.write(data, @arch.bytes)
+    @stack -= @arch.bytes
   end
 
   def pop
-    @stack -= @arch.bytes
-    return @mem.read(1)
+    @stack += @arch.bytes
+    return @stack.read(@arch.bytes)
+  end
+
+  def to_s
+    return "#{@stack}: #{@stack.read(1)}"
   end
 end

@@ -49,6 +49,8 @@ class Register
   def write(data)
     if data.is_a? Integer
       @bitfield.write(@size, data)
+    elsif data.is_a? String
+      @bitfield.write(@size, data[0...@arch.bytes].unpack('V*').pop)
     elsif data.is_a? Pointer
       @bitfield.write(@size, data.addr)
     elsif data.is_a? Register
