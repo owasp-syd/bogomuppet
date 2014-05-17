@@ -14,7 +14,7 @@ class Processor
   attr_accessor :mem, :stack
 
   def initialize
-    @arch  = Intel32
+    @arch  = IA32.new
     @mem   = Memory.new @arch
     @stack = Stack.new @arch, @mem
 
