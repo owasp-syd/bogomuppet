@@ -1,10 +1,11 @@
 class Intel32
   @@size   = 32
-
-  @@bit    = 0x1
-  @@nybble = 0x4
-  @@byte   = 0x8
-  @@word   = 0x10
-  @@dword  = 0x20
-  @@qword  = 0x40
+  @@tokens = {
+    bit:     0x01,
+    nybble:  0x04, #. half byte per nybble
+    byte:    0x08, #. 8 bits per byte
+    word:    0x10, #. 2 bytes per word  (16-bit)
+    dword:   0x20, #. 4 bytes per dword (32-bit)
+    qword:   0x40, #. 8 bytes per qword (64-bit)
+  }
 end
