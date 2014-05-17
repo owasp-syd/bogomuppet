@@ -44,14 +44,6 @@ class Bitfield
     @data |= bit(mode, index)
   end
 
-  def inc(mode)
-    @data += 1
-  end
-
-  def dec(mode)
-    @data -= 1
-  end
-
   def xor(mode, bitfield)
     if bitfield.is_a? Bitfield
       @data ^= bitfield.data(mode)
@@ -76,6 +68,26 @@ class Bitfield
     else
       @data |= bitfield & mask(mode)
     end
+    return self
+  end
+
+  def add(mode, bitfield)
+    if bitfield.is_a? Bitfield
+      @data += bitfield.data(mode)
+    else
+      @data += bitfield & mask(mode)
+    end
+    #@data &= ((1 << mode) - 1)
+    return self
+  end
+
+  def sub(mode, bitfield)
+    if bitfield.is_a? Bitfield
+      @data -= bitfield.data(mode)
+    else
+      @data -= bitfield & mask(mode)
+    end
+    #@data &= ((1 << mode) - 1)
     return self
   end
 

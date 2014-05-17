@@ -116,6 +116,26 @@ class Register
     return self
   end
 
+  def -(object)
+    if object.is_a? Register
+      @bitfield = @bitfield.sub(@size, object.bitfield)
+    else
+      @bitfield = @bitfield.sub(@size, object)
+    end
+
+    return self
+  end
+
+  def +(object)
+    if object.is_a? Register
+      @bitfield = @bitfield.add(@size, object.bitfield)
+    else
+      @bitfield = @bitfield.add(@size, object)
+    end
+
+    return self
+  end
+
   def &(object)
     if object.is_a? Register
       @bitfield = @bitfield.and(@size, object.bitfield)
@@ -148,18 +168,6 @@ class Register
 
   def [](subregister)
     raise 'Hell'
-  end
-
-  def dec() return self.-(1) end
-  def -(int)
-    @bitfield.dec(@size, int)
-    return self
-  end
-
-  def inc() return self.+(1) end
-  def +(int)
-    @bitfield.inc(@size, int)
-    return self
   end
 
   def to_s
