@@ -8,34 +8,12 @@ class Pointer
     @addr = addr
   end
 
-  def [](i)
-    if i.is_a? Register
-      return @@mem[@addr + i.bits]
-    else
-      return @@mem[@addr + i]
-    end
-  end
-
-  def []=(i, v)
-    if i.is_a? Register
-      @@mem[@addr + i.bits] = v
-    else
-      @@mem[@addr + i] = v
-    end
-  end
-
   def to_s
     return sprintf("ptr:%0#10x", @addr)
   end
 
-  def write(data)
-    if defined? data.each_char
-      data = data.each_char.map { |c| c.ord }
-    end
-
-    data.each_with_index { |byte, i| @@mem[@addr+i] = byte }
-
-    return data.length
+  def write(data, size)
+    return @@mem.set(@addr, data, size)
   end
 end
 
@@ -55,12 +33,18 @@ class Memory
     end
   end
 
-  def []=(addr, v) self.set(addr, v, addr.count) end
-  def set(addr, v, size)
-    i = 0
-    v.each_char do |byte|
-      @data[addr + i] = byte
-      i += 1
+  def []=(addr, data) self.set(addr, data, addr.count) end
+  def set(addr, data, size)
+    wrote = 0
+    data.each_byte do |byte|
+      if wrote < size then
+        @data[addr + wrote] = byte
+        wrote += 1
+      else
+        break
+      end
     end
+
+    return wrote
   end
 end
