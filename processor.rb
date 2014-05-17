@@ -17,6 +17,7 @@ class Processor
     @mem  = Memory.new @arch
 
     Register.mem = @mem
+    @eflags = Register.new(:EFLAGS, 0x20)
 
     #. General Registers -={
     @eax = Register.new(:EAX, 0x20)   #. 32-bit Accumulator Registers
