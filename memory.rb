@@ -12,6 +12,10 @@ class Pointer
     return sprintf("ptr:%0#10x", @addr)
   end
 
+  def read(size)
+    return @@mem.get(@addr, size)
+  end
+
   def write(data, size)
     return @@mem.set(@addr, data, size)
   end
@@ -20,16 +24,15 @@ end
 class Memory
   def initialize(arch)
     @arch = arch
-    @data = Array.new(0)
+    @data = Hash.new("\x00")
   end
 
   def [](addr) self.get(addr, 0) end
   def get(addr,  bytes=0)
-    byte = Pointer.new(self, addr)
     if bytes == 0
-      return byte.nil? ? 0x0 : byte
+      return Pointer.new(self, addr)
     else
-      return @data[addr...(addr+bytes)].map { |byte| byte.to_s(16) }.join()
+      return (addr...(addr+bytes)).map { |addr| @data[addr] }.pack('L*')
     end
   end
 
@@ -47,5 +50,25 @@ class Memory
     end
 
     return wrote
+  end
+end
+
+class Stack
+  def initialize(arch, mem)
+    @arch = arch
+    @mask = (@arch.bits << 1) - 1
+    @mem = mem
+    @base = @mem[0xFFFF0000]
+    @stack = @mem[0xFFFF0000]
+  end
+
+  def push(data)
+    @stack.write(data & @mask)
+    @stack += @arch.bytes
+  end
+
+  def pop
+    @stack -= @arch.bytes
+    return @mem.read(1)
   end
 end

@@ -11,12 +11,15 @@ class Processor
   attr_accessor :esi, :edi
   attr_accessor :ebp, :esp
 
-  attr_accessor :mem
+  attr_accessor :mem, :stack
 
   def initialize
-    @arch = Intel32
-    @mem  = Memory.new @arch
-    Register.mem = @mem
+    @arch  = Intel32
+    @mem   = Memory.new @arch
+    @stack = Stack.new @arch, @mem
+
+    Register.mem   = @mem
+    Register.stack = @stack
 
     @eflags = EFLAGS.new
 

@@ -8,9 +8,13 @@ class Register
   include Comparable
 
   @@mem = nil
-
   def self.mem=(mem)
     @@mem = mem
+  end
+
+  @@stack = nil
+  def self.stack=(stack)
+    @@stack = stack
   end
 
   def initialize(name, size, bitfield=nil, mask=nil)
@@ -60,6 +64,10 @@ class Register
 
   def bits
     return @bitfield.data(@size)
+  end
+
+  def packed
+    return @bitfield.packed(@size)
   end
 
   def [](index)

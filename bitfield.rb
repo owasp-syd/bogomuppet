@@ -32,6 +32,10 @@ class Bitfield
     return @data & mask(mode)
   end
 
+  def packed(mode)
+    return [(@data & mode).to_s(16)].pack("H*")
+  end
+
   def unset(mode, index)
     @data &= ~bit(mode, index)
   end
