@@ -29,13 +29,14 @@ class Memory
     if bytes == 0
       return byte.nil? ? 0x0 : byte
     else
-      return @data[addr...(addr+bytes)].join()
+      return @data[addr...(addr+bytes)].map { |byte| byte.to_s(16) }.join()
     end
   end
 
   def []=(addr, data) self.set(addr, data, addr.count) end
   def set(addr, data, size)
     wrote = 0
+
     data.each_byte do |byte|
       if wrote < size then
         @data[addr + wrote] = byte
