@@ -1,4 +1,5 @@
 require_relative 'bitfield'
+require_relative 'flag'
 
 class Register
   include Comparable
@@ -11,6 +12,7 @@ class Register
 
   def initialize(name, size, bitfield=nil, mask=nil)
     @name = name
+    @flags = []
 
     #. Either set size, or bitfield and mask
     if size > 0
@@ -21,11 +23,42 @@ class Register
       @size = Bitfield.mask2size mask
     end
 
+    if name == :EFLAGS
+      @flags = [
+        0x00 => Flag.new(0x1, :cf,   :s, 'carry flag'),
+        0x02 => Flag.new(0x1, :pf,   :s, 'parity flag'),
+        0x04 => Flag.new(0x1, :af,   :s, 'auxiliary carry flag'),
+        0x06 => Flag.new(0x1, :zf,   :s, 'zero flag'),
+        0x07 => Flag.new(0x1, :sf,   :s, 'sign flag'),
+        0x08 => Flag.new(0x1, :tf,   :x, 'trap flag'),
+        0x09 => Flag.new(0x1, :if,   :x, 'interrupt enable flag'),
+        0x0a => Flag.new(0x1, :df,   :c, 'direction flag'),
+        0x0b => Flag.new(0x1, :of,   :s, 'overflow flag'),
+        0x0c => Flag.new(0x2, :iopl, :x, 'i/o pivilege level'),
+        0x0e => Flag.new(0x1, :nt,   :x, 'nested task'),
+        0x10 => Flag.new(0x1, :rf,   :x, 'resume flag'),
+        0x11 => Flag.new(0x1, :vm,   :x, 'virtual 8080 mode'),
+        0x12 => Flag.new(0x1, :ac,   :x, 'alignment check'),
+        0x13 => Flag.new(0x1, :vif,  :x, 'virtual interrupt flag'),
+        0x14 => Flag.new(0x1, :vip,  :x, 'virtual interrupt pending'),
+        0x15 => Flag.new(0x1, :id,   :x, 'id flag'),
+      ]
+    end
+
     @fmtstr = "%%0#%dx" % (2 + @size / 4)
   end
 
   def register(name, mask)
     return Register.new(name, -1, @bitfield, mask)
+  end
+
+  def setflags(fields)
+    fields.each do |index, flag|
+      if not flag.nil?
+        flag.bitfield = self
+        @flags[index] = flag
+      end
+    end
   end
 
   def write(data)
