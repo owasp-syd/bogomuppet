@@ -51,9 +51,11 @@ class Register
   end
 
   def read(size=nil)
-    #. return the immediate value in the register is no size specified
-    #. if a size is specified, then assume the register contains an address,
+    #. Return the immediate value in the register is no size specified
+    #.
+    #. If a size is specified, then assume the register contains an address,
     #. dereference to that address and read size bytes from there
+
     if size.nil?
       return @bitfield.data(@size)
     else

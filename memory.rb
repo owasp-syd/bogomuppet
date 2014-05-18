@@ -101,29 +101,3 @@ class Memory
     return wrote
   end
 end
-
-class Stack
-  attr_reader :base, :stack
-
-  def initialize(arch, mem)
-    @arch  = arch
-    @mask  = (@arch.bits << 1) - 1
-    @mem   = mem
-    @base  = @mem[0xFFFF0000]
-    @stack = @mem[0xFFFF0000]
-  end
-
-  def push(data)
-    @stack.write(data, @arch.bytes)
-    @stack -= @arch.bytes
-  end
-
-  def pop
-    @stack += @arch.bytes
-    return @stack.read(@arch.bytes)
-  end
-
-  def to_s
-    return "#{@stack}: #{@stack.read(1)}"
-  end
-end

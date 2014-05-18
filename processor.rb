@@ -11,22 +11,20 @@ class Processor
   attr_accessor :esi, :edi
   attr_accessor :ebp, :esp
 
-  attr_accessor :mem, :stack
+  attr_accessor :mem
 
   def initialize
     @arch  = IA32.new
     @mem   = Memory.new @arch
-    @stack = Stack.new @arch, @mem
 
     Register.mem   = @mem
-    Register.stack = @stack
 
     @eflags = EFLAGS.new
 
     @eip = EIP.new
 
-    @ebp = EBP.new
-    @esp = ESP.new
+    @ebp = EBP.new; @ebp.write(0xFFFF0000)
+    @esp = ESP.new; @esp.write(0xFFFF0000)
 
     @eax = EAX.new; @ax = @eax[:ax]; @al = @eax[:al]; @ah = @eax[:ah]
     @ebx = EBX.new; @bx = @ebx[:bx]; @bl = @ebx[:bl]; @bh = @ebx[:bh]
@@ -50,5 +48,20 @@ class Processor
 
   def mov(dst, src)
     dst.write(src, dst.size)
+  end
+
+  def push(data)
+    @esp -= @arch.bytes
+    @mem[@esp.read].write(data, @arch.bytes)
+  end
+
+  def pop
+    data = @esp.read(@arch.bytes)
+    @esp += @arch.bytes
+    return data
+  end
+
+  def to_s
+    return "#{@esp.addr}: #{@esp.read(1)}"
   end
 end

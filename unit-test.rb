@@ -118,39 +118,40 @@ end
 class TestStack < Minitest::Test
   def setup
     @cpu = Processor.new
-    @stack = @cpu.stack
+    @esp = @cpu.esp
+    @ebp = @cpu.ebp
   end
 
   def test_stack_pointer
-    assert_equal 0xFFFF0000, @stack.base.addr
-    assert_equal 0xFFFF0000, @stack.stack.addr
+    assert_equal 0xFFFF0000, @ebp.read
+    assert_equal 0xFFFF0000, @esp.read
 
-    @stack.push  0x51525354
-    assert_equal 0xFFFF0000, @stack.base.addr
-    assert_equal 0xFFFEFFFC, @stack.stack.addr
+    @cpu.push    0x51525354
+    assert_equal 0xFFFF0000, @ebp.read
+    assert_equal 0xFFFEFFFC, @esp.read
 
-      @stack.push  0x61626364
-      assert_equal 0xFFFEFFF8, @stack.stack.addr
+    @cpu.push    0x61626364
+    assert_equal 0xFFFEFFF8, @esp.read
 
-        @stack.push  "\x41\x42\x43\x44"
-        assert_equal 0xFFFEFFF4, @stack.stack.addr
+    @cpu.push    "\x41\x42\x43\x44"
+    assert_equal 0xFFFEFFF4, @esp.read
 
-    assert_equal 0xFFFF0000, @stack.base.addr
+    assert_equal 0xFFFF0000, @ebp.read
 
-        assert_equal "\x41\x42\x43\x44", @stack.pop
-        assert_equal 0xFFFEFFF8, @stack.stack.addr
+    assert_equal "\x41\x42\x43\x44", @cpu.pop
+    assert_equal 0xFFFEFFF8, @esp.read
 
-      assert_equal "\x64\x63\x62\x61", @stack.pop
-      assert_equal 0xFFFEFFFC, @stack.stack.addr
+    assert_equal "\x64\x63\x62\x61", @cpu.pop
+    assert_equal 0xFFFEFFFC, @esp.read
 
-    assert_equal "\x54\x53\x52\x51", @stack.pop
-    assert_equal 0xFFFF0000, @stack.stack.addr
+    assert_equal "\x54\x53\x52\x51", @cpu.pop
+    assert_equal 0xFFFF0000, @esp.read
 
-    assert_equal 0xFFFF0000, @stack.base.addr
+    assert_equal 0xFFFF0000, @ebp.read
   end
 end
 #. }=-
-#. Processor -=
+#. Processor -={
 class TestProcessor < Minitest::Test
   def setup
     @cpu = Processor.new
