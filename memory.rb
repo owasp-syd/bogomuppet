@@ -3,9 +3,10 @@ class Pointer
 
   attr_accessor :addr
 
-  def initialize(mem, addr)
+  def initialize(mem, addr, size=nil)
     @@mem = mem
     @addr = addr
+    @size = size #. optional default size for r/w
   end
 
   def to_s
@@ -24,16 +25,44 @@ class Pointer
     return self
   end
 
-  def read(size)
-    return @@mem.get(@addr, size)
+  def size(s=nil)
+    case s
+      when Integer then size = s
+      when :BYTE, :WORD, :DWORD then size = @@mem.arch[s]
+      when nil then size = @size
+    end
+    raise SyntaxError if size.nil?
+
+    return size
   end
 
-  def write(data, size)
-    return @@mem.set(@addr, data, size)
+  def read(size=nil)
+    return @@mem.get(@addr, size(size))
+  end
+
+  def write(data, size=nil)
+    return @@mem.set(@addr, data, size(size))
+  end
+
+  def byte
+    @size = @@mem.arch[:byte]
+    return self
+  end
+
+  def word
+    @size = @@mem.arch[:word]
+    return self
+  end
+
+  def dword
+    @size = @@mem.arch[:dword]
+    return self
   end
 end
 
 class Memory
+  attr_reader :arch
+
   def initialize(arch)
     @arch = arch
     @data = Hash.new("\x00")
@@ -57,7 +86,7 @@ class Memory
       when Integer
         data = [data & @arch.mask].pack('V*')
       when Register
-        data = [data.bits & @arch.mask].pack('V*')
+        data = [data.read & @arch.mask].pack('V*')
     end
 
     data.each_char do |byte|

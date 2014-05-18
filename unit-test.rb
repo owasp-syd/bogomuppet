@@ -15,17 +15,17 @@ class TestMath < Minitest::Test
     @cpu.eax = 0xAABBCCDD
 
     @cpu.eax ^= 0xABABABAB
-    assert_equal 0x1106776, @cpu.eax.bits
+    assert_equal 0x1106776, @cpu.eax.read
 
     @cpu.eax ^= @cpu.eax
-    assert_equal 0x0000000, @cpu.eax.bits
+    assert_equal 0x0000000, @cpu.eax.read
   end
 
   def test_or
     @cpu.eax = 0xAABBCCDD
 
     @cpu.eax |= 0xAA000000
-    assert_equal 0xAABBCCDD, @cpu.eax.bits
+    assert_equal 0xAABBCCDD, @cpu.eax.read
   end
 
   def test_add
@@ -33,7 +33,7 @@ class TestMath < Minitest::Test
     @cpu.ebx = 0x0000CCDD
 
     @cpu.eax += @cpu.ebx
-    assert_equal 0xAABBCCDD, @cpu.eax.bits
+    assert_equal 0xAABBCCDD, @cpu.eax.read
   end
 
   def test_sub
@@ -41,7 +41,7 @@ class TestMath < Minitest::Test
     @cpu.ebx = 0x0000CCDD
 
     @cpu.eax -= @cpu.ebx
-    assert_equal 0xAABB0000, @cpu.eax.bits
+    assert_equal 0xAABB0000, @cpu.eax.read
   end
 
   # http://web.itu.edu.tr/kesgin/mul06/intel/instr/mul.html
@@ -52,10 +52,10 @@ class TestMath < Minitest::Test
     @cpu.edx = 0
     #@cpu.eax *= @cpu.ebx
     @cpu.ebx.mul()
-    assert_equal 0xb72ea56f,@cpu.eax.bits
-    assert_equal 0x0018FF50,@cpu.ebx.bits
-    assert_equal 0,@cpu.ecx.bits
-    assert_equal 0x7c,@cpu.edx.bits
+    assert_equal 0xb72ea56f,@cpu.eax.read
+    assert_equal 0x0018FF50,@cpu.ebx.read
+    assert_equal 0,@cpu.ecx.read
+    assert_equal 0x7c,@cpu.edx.read
   end
 
   def _test_div
@@ -64,10 +64,10 @@ class TestMath < Minitest::Test
     @cpu.ecx = 2
     @cpu.edx = 0
     @cpu.ecx.div()
-    assert_equal 0x555de66e,@cpu.eax.bits
-    assert_equal 0x0018ff50,@cpu.ebx.bits
-    assert_equal 0x00000002,@cpu.ecx.bits
-    assert_equal 1,@cpu.edx.bits
+    assert_equal 0x555de66e,@cpu.eax.read
+    assert_equal 0x0018ff50,@cpu.ebx.read
+    assert_equal 0x00000002,@cpu.ecx.read
+    assert_equal 1,@cpu.edx.read
   end
 
   # http://web.itu.edu.tr/kesgin/mul06/intel/instr/imul.html
@@ -77,10 +77,10 @@ class TestMath < Minitest::Test
     @cpu.ecx = 0
     @cpu.edx = 0
     @cpu.ebx.imul()
-    assert_equal 0xc27ea56f,@cpu.eax.bits
-    assert_equal 0x0018ff50,@cpu.ebx.bits
-    assert_equal 0,@cpu.ecx.bits
-    assert_equal 0xffffffff,@cpu.edx.bits
+    assert_equal 0xc27ea56f,@cpu.eax.read
+    assert_equal 0x0018ff50,@cpu.ebx.read
+    assert_equal 0,@cpu.ecx.read
+    assert_equal 0xffffffff,@cpu.edx.read
   end
 
   def _test_mathIdiv
@@ -89,15 +89,15 @@ class TestMath < Minitest::Test
     @cpu.ecx = 2
     @cpu.edx = 0
     @cpu.ecx.idiv()
-    assert_equal 0x555de66e,@cpu.eax.bits
-    assert_equal 0x0018ff50,@cpu.ebx.bits
-    assert_equal 2,@cpu.ecx.bits
-    assert_equal 1,@cpu.edx.bits
+    assert_equal 0x555de66e,@cpu.eax.read
+    assert_equal 0x0018ff50,@cpu.ebx.read
+    assert_equal 2,@cpu.ecx.read
+    assert_equal 1,@cpu.edx.read
   end
 end
 #. }=-
 #. Memory -={
-class TestMem < Minitest::Test
+class TestMemory < Minitest::Test
   def setup
     @cpu = Processor.new
     @mem = @cpu.mem
@@ -114,7 +114,7 @@ class TestMem < Minitest::Test
   end
 end
 #. }=-
-#. Stack -=
+#. Stack -={
 class TestStack < Minitest::Test
   def setup
     @cpu = Processor.new
@@ -147,6 +147,38 @@ class TestStack < Minitest::Test
     assert_equal 0xFFFF0000, @stack.stack.addr
 
     assert_equal 0xFFFF0000, @stack.base.addr
+  end
+end
+#. }=-
+#. Processor -=
+class TestProcessor < Minitest::Test
+  def setup
+    @cpu = Processor.new
+    @mem = @cpu.mem
+    @eax = @cpu.eax
+    @ebx = @cpu.ebx
+  end
+
+  def test_mov
+    #. mov <reg>, <const>
+    @cpu.mov @eax, 0x51525355
+    assert_equal 0x51525355, @eax.read
+
+    #. mov <reg>, <reg>
+    @cpu.mov @ebx, @eax
+    assert_equal 0x51525355, @ebx.read
+
+    #. mov <mem>, <reg>
+    @cpu.mov @mem[0xF0FF0000].byte, @ebx
+    assert_equal "\x55\x53\x52\x51", @mem[0xF0FF0000].read(:DWORD)
+
+    #. mov <reg>, <mem>
+    @cpu.mov @eax, @mem[0xF0FF0000].byte
+    assert_equal 0x51525355, @ebx.read
+
+    #. mov <mem>, <const>
+    @cpu.mov @mem[0xF0FF0000].byte, 'BABY'
+    assert_equal 'BABY', @mem[0xF0FF0000].read(:DWORD)
   end
 end
 #. }=-

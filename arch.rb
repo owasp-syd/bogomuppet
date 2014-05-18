@@ -8,10 +8,14 @@ class Architecture
     word:    0x10, #. 2 bytes per word  (16-bit)
     dword:   0x20, #. 4 bytes per dword (32-bit)
     qword:   0x40, #. 8 bytes per qword (64-bit)
+    BYTE:    0x01, #. 1 byte per byte
+    WORD:    0x02, #. 2 bytes per word  (16-bit)
+    DWORD:   0x04, #. 4 bytes per dword (32-bit)
+    QWORD:   0x08, #. 8 bytes per qword (64-bit)
   }
 
   def self.[](key) @@tokens[key] end
-
+  def [](key) self.class[key] end
   def mask()  ((1 << @bits) - 1)  end
   def bytes() (@bits / @@tokens[:byte]) end
 end

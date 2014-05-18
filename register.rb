@@ -7,14 +7,18 @@ require_relative 'flag'
 class Register
   include Comparable
 
-  @@mem = nil
-  def self.mem=(mem)
-    @@mem = mem
-  end
+  attr_reader :size
 
-  @@stack = nil
-  def self.stack=(stack)
-    @@stack = stack
+  class << self
+    @@mem = nil
+    def mem=(mem)
+      @@mem = mem
+    end
+
+    @@stack = nil
+    def stack=(stack)
+      @@stack = stack
+    end
   end
 
   def initialize(name, size, bitfield=nil, mask=nil)
@@ -46,30 +50,38 @@ class Register
     end
   end
 
-  def write(data)
-    if data.is_a? Integer
-      @bitfield.write(@size, data)
-    elsif data.is_a? String
-      @bitfield.write(@size, data[0...@arch.bytes].unpack('V*').pop)
-    elsif data.is_a? Pointer
-      @bitfield.write(@size, data.addr)
-    elsif data.is_a? Register
-      @bitfield.write(@size, data.bits)
+  def read(size=nil)
+    #. return the immediate value in the register is no size specified
+    #. if a size is specified, then assume the register contains an address,
+    #. dereference to that address and read size bytes from there
+    if size.nil?
+      return @bitfield.data(@size)
     else
-      raise "Hell", data
+      return @@mem[@bitfield.data(@size)].read(size)
+    end
+  end
+
+  def packed
+    return @bitfield.packed(@size)
+  end
+
+  def write(data, junk=nil)
+    case data
+      when Integer
+        @bitfield.write(@size, data)
+      when String
+        @bitfield.write(@size, data[0...@@mem.arch.bytes].unpack('V*').pop)
+      when Pointer
+        @bitfield.write(@size, data.addr)
+      when Register
+        @bitfield.write(@size, data.read)
+      else
+        raise "Junk: #{data}"
     end
   end
 
   def bitfield
     return @bitfield
-  end
-
-  def bits
-    return @bitfield.data(@size)
-  end
-
-  def packed
-    return @bitfield.packed(@size)
   end
 
   def [](index)
@@ -159,9 +171,9 @@ class Register
   end
 
   def <=>(reg)
-    if self.bits < reg.bits
+    if self.read < reg.read
       return -1
-    elsif self.bits > reg.bits
+    elsif self.read > reg.read
       return 1
     else
       return 0
