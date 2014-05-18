@@ -51,14 +51,26 @@ class Processor
   end
 
   def push(data)
+    #. The push instruction places its operand onto the top of the hardware
+    #. supported stack in memory.
+    #.
+    #. Specifically, push first decrements ESP by 4, then places its operand
+    #. into the contents of the 32-bit location at address [ESP]. ESP (the
+    #. stack pointer) is decremented by push since the x86 stack grows down -
+    #. i.e. the stack grows from high addresses to lower addresses.
     @esp -= @arch.bytes
     @mem[@esp.read].write(data, @arch.bytes)
   end
 
-  def pop
-    data = @esp.read(@arch.bytes)
+  def pop(dst)
+    #. The pop instruction removes the 4-byte data element from the top of the
+    #. hardware-supported stack into the specified operand (i.e. register or
+    #. memory location).
+    #.
+    #. It first moves the 4 bytes located at memory location [SP] into the
+    #. specified register or memory location, and then increments SP by 4.
+    dst.write(@esp.read(@arch.bytes))
     @esp += @arch.bytes
-    return data
   end
 
   def to_s

@@ -118,8 +118,13 @@ end
 class TestStack < Minitest::Test
   def setup
     @cpu = Processor.new
+
     @esp = @cpu.esp
     @ebp = @cpu.ebp
+
+    @eax = @cpu.eax
+    @ebx = @cpu.ebx
+    @ecx = @cpu.ecx
   end
 
   def test_stack_pointer
@@ -138,14 +143,18 @@ class TestStack < Minitest::Test
 
     assert_equal 0xFFFF0000, @ebp.read
 
-    assert_equal "\x41\x42\x43\x44", @cpu.pop
+    @cpu.pop     @eax
     assert_equal 0xFFFEFFF8, @esp.read
 
-    assert_equal "\x64\x63\x62\x61", @cpu.pop
+    @cpu.pop     @ebx
     assert_equal 0xFFFEFFFC, @esp.read
 
-    assert_equal "\x54\x53\x52\x51", @cpu.pop
+    @cpu.pop     @ecx
     assert_equal 0xFFFF0000, @esp.read
+
+    assert_equal 0x44434241, @eax.read
+    assert_equal 0x61626364, @ebx.read
+    assert_equal 0x51525354, @ecx.read
 
     assert_equal 0xFFFF0000, @ebp.read
   end
