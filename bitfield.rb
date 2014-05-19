@@ -13,6 +13,7 @@ class Bitfield
   def initialize(size)
     @data = 0x0
     @size = size
+    @fmtstr = "%%0#%dx" % (2 + @size / 4)
   end
 
   def bit(mode, index)
@@ -34,6 +35,10 @@ class Bitfield
 
   def packed(mode)
     return [(@data & mode).to_s(16)].pack("H*")
+  end
+
+  def to_s
+    return @data > 0 ? (@fmtstr.green % @data) : (@fmtstr.red % @data)
   end
 
   def unset(mode, index)

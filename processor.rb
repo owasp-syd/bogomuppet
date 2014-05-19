@@ -11,7 +11,7 @@ class Processor
   attr_accessor :esi, :edi
   attr_accessor :ebp, :esp
 
-  attr_accessor :mem
+  attr_accessor :mem, :eflags
 
   def initialize
     @arch  = IA32.new

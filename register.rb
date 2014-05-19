@@ -1,3 +1,6 @@
+require 'colorize'
+require 'pp'
+
 require_relative 'bitfield'
 require_relative 'flag'
 
@@ -33,21 +36,10 @@ class Register
       @bitfield = bitfield
       @size = Bitfield.mask2size mask
     end
-
-    @fmtstr = "%%0#%dx" % (2 + @size / 4)
   end
 
   def register(name, mask)
     return Register.new(name, -1, @bitfield, mask)
-  end
-
-  def setflags(fields)
-    fields.each do |index, flag|
-      if not flag.nil?
-        flag.bitfield = self
-        @flags[index] = flag
-      end
-    end
   end
 
   def read(size=nil)
@@ -187,7 +179,15 @@ class Register
   end
 
   def to_s
-    return "%3s:" % @name.to_s + sprintf(@fmtstr, @bitfield.data(@size))
+    s = nil
+
+    if @flags.count > 0
+      s = sprintf("%s[%s]", @name.to_s, @flags.map { |flag| flag.to_s }.join)
+    else
+      s = sprintf("%s[%s]", @name.to_s, @bitfield.to_s)
+    end
+
+    return s
   end
 end
 #. }=-
@@ -198,23 +198,23 @@ class EFLAGS < Register
   def initialize
     super(:EFLAGS, 0x20)
     @flags = [
-      0x00 => Flag.new(0x1, :cf,   :s, 'carry flag'),
-      0x02 => Flag.new(0x1, :pf,   :s, 'parity flag'),
-      0x04 => Flag.new(0x1, :af,   :s, 'auxiliary carry flag'),
-      0x06 => Flag.new(0x1, :zf,   :s, 'zero flag'),
-      0x07 => Flag.new(0x1, :sf,   :s, 'sign flag'),
-      0x08 => Flag.new(0x1, :tf,   :x, 'trap flag'),
-      0x09 => Flag.new(0x1, :if,   :x, 'interrupt enable flag'),
-      0x0a => Flag.new(0x1, :df,   :c, 'direction flag'),
-      0x0b => Flag.new(0x1, :of,   :s, 'overflow flag'),
-      0x0c => Flag.new(0x2, :iopl, :x, 'i/o pivilege level'),
-      0x0e => Flag.new(0x1, :nt,   :x, 'nested task'),
-      0x10 => Flag.new(0x1, :rf,   :x, 'resume flag'),
-      0x11 => Flag.new(0x1, :vm,   :x, 'virtual 8080 mode'),
-      0x12 => Flag.new(0x1, :ac,   :x, 'alignment check'),
-      0x13 => Flag.new(0x1, :vif,  :x, 'virtual interrupt flag'),
-      0x14 => Flag.new(0x1, :vip,  :x, 'virtual interrupt pending'),
-      0x15 => Flag.new(0x1, :id,   :x, 'id flag'),
+      Flag.new(self, 0x00000001, :cf,   :s, 'carry flag'),
+      Flag.new(self, 0x00000004, :pf,   :s, 'parity flag'),
+      Flag.new(self, 0x00000010, :af,   :s, 'auxiliary carry flag'),
+      Flag.new(self, 0x00000040, :zf,   :s, 'zero flag'),
+      Flag.new(self, 0x00000080, :sf,   :s, 'sign flag'),
+      Flag.new(self, 0x00000100, :tf,   :x, 'trap flag'),
+      Flag.new(self, 0x00000200, :if,   :x, 'interrupt enable flag'),
+      Flag.new(self, 0x00000400, :df,   :c, 'direction flag'),
+      Flag.new(self, 0x00000800, :of,   :s, 'overflow flag'),
+      Flag.new(self, 0x00003000, :iopl, :x, 'i/o pivilege level'),
+      Flag.new(self, 0x00004000, :nt,   :x, 'nested task'),
+      Flag.new(self, 0x00010000, :rf,   :x, 'resume flag'),
+      Flag.new(self, 0x00020000, :vm,   :x, 'virtual 8080 mode'),
+      Flag.new(self, 0x00040000, :ac,   :x, 'alignment check'),
+      Flag.new(self, 0x00080000, :vif,  :x, 'virtual interrupt flag'),
+      Flag.new(self, 0x00100000, :vip,  :x, 'virtual interrupt pending'),
+      Flag.new(self, 0x00200000, :id,   :x, 'id flag'),
     ]
   end
 end
@@ -336,5 +336,4 @@ class EIP < Register
   end
 end
 #. }=-
-
 #. }=-
