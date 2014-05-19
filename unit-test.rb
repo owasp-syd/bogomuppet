@@ -5,7 +5,25 @@ require_relative 'memory'
 require 'minitest/autorun'
 
 #. Tests -={
-#. Registers -={
+#. Memory -={
+class TestMemory < Minitest::Test
+  def setup
+    @cpu = Processor.new
+    @mem = @cpu.mem
+  end
+
+  def test_mem
+    addr = 0x0400f000
+    @mem.set(addr, "\xAA\xBB\xCC\xDD\x11\x00\x44\x33", 8)
+    assert_equal "\xAA\xBB\xCC\xDD", @mem.get(addr, 4)
+
+    addr = 0x0400e000
+    @mem.set(addr, 0x41424344, 4)
+    assert_equal "DCBA", @mem.get(addr, 4)
+  end
+end
+#. }=-
+#. Processor:Registers -={
 class TestMath < Minitest::Test
   def setup
     @cpu = Processor.new
@@ -96,25 +114,7 @@ class TestMath < Minitest::Test
   end
 end
 #. }=-
-#. Memory -={
-class TestMemory < Minitest::Test
-  def setup
-    @cpu = Processor.new
-    @mem = @cpu.mem
-  end
-
-  def test_mem
-    addr = 0x0400f000
-    @mem.set(addr, "\xAA\xBB\xCC\xDD\x11\x00\x44\x33", 8)
-    assert_equal "\xAA\xBB\xCC\xDD", @mem.get(addr, 4)
-
-    addr = 0x0400e000
-    @mem.set(addr, 0x41424344, 4)
-    assert_equal "DCBA", @mem.get(addr, 4)
-  end
-end
-#. }=-
-#. Stack -={
+#. Processor:Stack -={
 class TestStack < Minitest::Test
   def setup
     @cpu = Processor.new
@@ -160,7 +160,7 @@ class TestStack < Minitest::Test
   end
 end
 #. }=-
-#. Processor -={
+#. Processor:Instructions -={
 class TestProcessor < Minitest::Test
   def setup
     @cpu = Processor.new
