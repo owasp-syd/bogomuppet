@@ -34,7 +34,7 @@ class Register
       @bitfield = Bitfield.new @size
     else
       @bitfield = bitfield
-      @size = Bitfield.mask2size mask
+      @size = mask_width mask
     end
   end
 

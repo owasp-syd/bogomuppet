@@ -1,15 +1,6 @@
 class Bitfield
   include Comparable
 
-  def self.mask2size(data)
-    count = 0
-    while (data != 0)
-      data &= (data-1)
-      count += 1
-    end
-    return count
-  end
-
   def initialize(size)
     @data = 0x0
     @size = size

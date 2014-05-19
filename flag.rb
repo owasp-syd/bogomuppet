@@ -9,7 +9,7 @@ class Flag
     @type = type
     @desc = desc
     @mask = mask
-    @size = bitsSetInDWORD(mask)
+    @size = bits_set(mask)
     @color = String.colors[@name.hash % String.colors.count]
 
     @pstart = 0
