@@ -27,7 +27,6 @@ class Register
   #. Either set size, or bitfield and mask to initialize a Register
   def initialize(name, size, bitfield=nil, mask=nil)
     @name = name
-    @flags = []
     @mask = mask
 
     if size > 0
@@ -38,6 +37,8 @@ class Register
       @bitfield = bitfield
       @size = mask_width @mask
     end
+
+    @flags = []
   end
 
   def register(name, mask)
@@ -218,6 +219,7 @@ class EFLAGS < Register
       Flag.new(self, 0x00100000, :vip,  :x, 'virtual interrupt pending'),
       Flag.new(self, 0x00200000, :id,   :x, 'id flag'),
     ]
+    write(0x2)
   end
 end
 #. }=-
