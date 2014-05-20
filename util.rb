@@ -12,3 +12,11 @@ def mask_width(data)
 
   return count
 end
+
+def mask_lshift_width(mask)
+  blanks = 0
+  while mask >> blanks & 0b1 == 0
+    blanks += 1
+  end
+  return blanks
+end

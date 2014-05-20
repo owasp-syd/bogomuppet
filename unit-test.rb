@@ -24,6 +24,32 @@ class TestMemory < Minitest::Test
 end
 #. }=-
 #. Processor:Registers -={
+class TestSubRegisters < Minitest::Test
+  def setup
+    @cpu = Processor.new
+  end
+
+  def test_gpr
+    @cpu.eax = 0xAABBFFDD
+    assert_equal 0xAABBFFDD, @cpu.eax.read
+
+    @cpu.ah += 1
+    assert_equal 0xAABB00DD, @cpu.eax.read
+    assert_equal 0x00DD, @cpu.ax.read
+    assert_equal 0x00, @cpu.ah.read
+    assert_equal 0xDD, @cpu.al.read
+
+    @cpu.ebx = @cpu.eax
+    assert_equal @cpu.eax.read, @cpu.ebx.read
+
+    @cpu.bh -= 1
+    assert_equal 0xAABBFFDD, @cpu.ebx.read
+    assert_equal 0xFFDD, @cpu.bx.read
+    assert_equal 0xFF, @cpu.bh.read
+    assert_equal 0xDD, @cpu.bl.read
+  end
+end
+
 class TestMath < Minitest::Test
   def setup
     @cpu = Processor.new

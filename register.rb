@@ -24,17 +24,19 @@ class Register
     end
   end
 
+  #. Either set size, or bitfield and mask to initialize a Register
   def initialize(name, size, bitfield=nil, mask=nil)
     @name = name
     @flags = []
+    @mask = mask
 
-    #. Either set size, or bitfield and mask
     if size > 0
       @size = size
+      @mask = (1 << size) - 1
       @bitfield = Bitfield.new @size
     else
       @bitfield = bitfield
-      @size = mask_width mask
+      @size = mask_width @mask
     end
   end
 
@@ -49,26 +51,26 @@ class Register
     #. dereference to that address and read size bytes from there
 
     if size.nil?
-      return @bitfield.data(@size)
+      return @bitfield.data(@mask)
     else
-      return @@mem[@bitfield.data(@size)].read(size)
+      return @@mem[@bitfield.data(@mask)].read(size)
     end
   end
 
   def packed
-    return @bitfield.packed(@size)
+    return @bitfield.packed(@mask)
   end
 
   def write(data, junk=nil)
     case data
       when Integer
-        @bitfield.write(@size, data)
+        @bitfield.write(@mask, data)
       when String
-        @bitfield.write(@size, data[0...@@mem.arch.bytes].unpack('V*').pop)
+        @bitfield.write(@mask, data[0...@@mem.arch.bytes].unpack('V*').pop)
       when Pointer
-        @bitfield.write(@size, data.addr)
+        @bitfield.write(@mask, data.addr)
       when Register
-        @bitfield.write(@size, data.read)
+        @bitfield.write(@mask, data.read)
       else
         raise "Junk: #{data}"
     end
@@ -96,9 +98,9 @@ class Register
 
   def ^(object)
     if object.is_a? Register
-      @bitfield = @bitfield.xor(@size, object.bitfield)
+      @bitfield = @bitfield.xor(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.xor(@size, object)
+      @bitfield = @bitfield.xor(@mask, object)
     end
 
     return self
@@ -106,9 +108,9 @@ class Register
 
   def *(object)
     if object.is_a? Register
-      @bitfield = @bitfield.mul(@size, object.bitfield)
+      @bitfield = @bitfield.mul(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.mul(@size, object)
+      @bitfield = @bitfield.mul(@mask, object)
     end
 
     return self
@@ -116,9 +118,9 @@ class Register
 
   def /(object)
     if object.is_a? Register
-      @bitfield = @bitfield.div(@size, object.bitfield)
+      @bitfield = @bitfield.div(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.div(@size, object)
+      @bitfield = @bitfield.div(@mask, object)
     end
 
     return self
@@ -126,9 +128,9 @@ class Register
 
   def -(object)
     if object.is_a? Register
-      @bitfield = @bitfield.sub(@size, object.bitfield)
+      @bitfield = @bitfield.sub(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.sub(@size, object)
+      @bitfield = @bitfield.sub(@mask, object)
     end
 
     return self
@@ -136,9 +138,9 @@ class Register
 
   def +(object)
     if object.is_a? Register
-      @bitfield = @bitfield.add(@size, object.bitfield)
+      @bitfield = @bitfield.add(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.add(@size, object)
+      @bitfield = @bitfield.add(@mask, object)
     end
 
     return self
@@ -146,9 +148,9 @@ class Register
 
   def &(object)
     if object.is_a? Register
-      @bitfield = @bitfield.and(@size, object.bitfield)
+      @bitfield = @bitfield.and(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.and(@size, object)
+      @bitfield = @bitfield.and(@mask, object)
     end
 
     return self
@@ -156,9 +158,9 @@ class Register
 
   def |(object)
     if object.is_a? Register
-      @bitfield = @bitfield.or(@size, object.bitfield)
+      @bitfield = @bitfield.or(@mask, object.bitfield)
     else
-      @bitfield = @bitfield.or(@size, object)
+      @bitfield = @bitfield.or(@mask, object)
     end
 
     return self
@@ -182,9 +184,9 @@ class Register
     s = nil
 
     if @flags.count > 0
-      s = sprintf("%s[%s]", @name.to_s, @flags.map { |flag| flag.to_s }.join)
+      s = sprintf("%s[%s]", @name.to_s.yellow, (@flags.map { |flag| flag.to_s }.join))
     else
-      s = sprintf("%s[%s]", @name.to_s, @bitfield.to_s)
+      s = sprintf("%s[%s]", @name.to_s.yellow, "%0##{@size/16}x".green % self.read)
     end
 
     return s
@@ -221,7 +223,7 @@ end
 #. }=-
 
 #. General Registers
-#. EAX - Accumulator Registers -={
+#. AX - Accumulator Registers -={
 class EAX < Register
 
   def initialize
@@ -241,7 +243,7 @@ class EAX < Register
   end
 end
 #. }=-
-#. EBX - Base Registers -={
+#. BX - Base Registers -={
 class EBX < Register
   def initialize
     super(:EBX, 0x20)
@@ -260,7 +262,7 @@ class EBX < Register
   end
 end
 #. }=-
-#. ECX - Counter Registers -={
+#. CX - Counter Registers -={
 class ECX < Register
   def initialize
     super(:ECX, 0x20)
@@ -279,7 +281,7 @@ class ECX < Register
   end
 end
 #. }=-
-#. EDX - Data Registers -={
+#. DX - Data Registers -={
 class EDX < Register
   def initialize
     super(:EDX, 0x20)
@@ -298,14 +300,16 @@ class EDX < Register
   end
 end
 #. }=-
-#. ESI - ??? -={
+
+#. General & String Manipulation Registers
+#. SI - Source Index -={
 class ESI < Register
   def initialize
     super(:ESI, 0x20)
   end
 end
 #. }=-
-#. EDI - ??? -={
+#. DI - Destination Index -={
 class EDI < Register
   def initialize
     super(:EDI, 0x20)
@@ -314,22 +318,51 @@ end
 #. }=-
 
 #. Segment Registers
-#. EBP - Base Pointer -={
+#. CS - Code Segment Register -={
+class CS < Register
+  def initialize
+    super(:CS, 0x10)
+  end
+end
+#. }=-
+#. DS - Data Segment Register -={
+class DS < Register
+  def initialize
+    super(:DS, 0x10)
+  end
+end
+#. }=-
+#. SS - Stack Segment Register -={
+class SS < Register
+  def initialize
+    super(:SS, 0x10)
+  end
+end
+#. }=-
+#. ES - Extra Segment Register -={
+class ES < Register
+  def initialize
+    super(:ES, 0x10)
+  end
+end
+#. }=-
+
+#. Pointer Registers
+#. BP - Base Pointer -={
 class EBP < Register
   def initialize
     super(:EBP, 0x20)
   end
 end
 #. }=-
-#. ESP - Stack Pointer -={
+#. SP - Stack Pointer -={
 class ESP < Register
   def initialize
     super(:ESP, 0x20)
   end
 end
 #. }=-
-
-#. EIP - Instruction Pointer -={
+#. IP - Instruction Pointer -={
 class EIP < Register
   def initialize
     super(:EIP, 0x20)

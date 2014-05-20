@@ -20,7 +20,7 @@ class Flag
   end
 
   def value
-    return @register.read & @mask
+    return ((@register.read & @mask) >> mask_lshift_width(@mask)).to_i
   end
 
   def to_s
@@ -28,7 +28,7 @@ class Flag
     s = []
     self.value.to_s(2).each_char.map { |bit|
       c = @name.to_s[i]
-      s << (bit == 1 ? c.upcase.bold : c.downcase)
+      s << (bit == '1' ? c.upcase.bold : c.downcase)
       i += 1
     }
     return s.join.colorize(@color)

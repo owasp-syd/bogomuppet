@@ -46,6 +46,8 @@ class Processor
   def esp=(data) @esp.write(data) end
   def ebp=(data) @ebp.write(data) end
 
+  def eflags=(data) @eflags.write(data) end
+
   def mov(dst, src)
     dst.write(src, dst.size)
   end

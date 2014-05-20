@@ -1,129 +1,80 @@
+require_relative 'util'
+
 class Bitfield
   include Comparable
 
   def initialize(size)
     @data = 0x0
     @size = size
+    @mask = (1 << @size) - 1
     @fmtstr = "%%0#%dx" % (2 + @size / 4)
-  end
-
-  def bit(mode, index)
-    return (1 << index)
-  end
-
-  def write(mode, data)
-    @data = mask(mode)
-    @data &= data
-  end
-
-  def mask(mode)
-    return ((1<<mode)-1)
-  end
-
-  def data(mode)
-    return @data & mask(mode)
-  end
-
-  def packed(mode)
-    return [(@data & mode).to_s(16)].pack("H*")
   end
 
   def to_s
     return @data > 0 ? (@fmtstr.green % @data) : (@fmtstr.red % @data)
   end
 
-  def unset(mode, index)
-    @data &= ~bit(mode, index)
+  def bit(index)
+    return (1 << index)
   end
 
-  def set(mode, index)
-    @data |= bit(mode, index)
+  def bit_unset(mask, index)
+    @data &= ~bit(index) << mask_lshift_width(mask)
   end
 
-  def xor(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data ^= bitfield.data(mode)
-    else
-      @data ^= bitfield & mask(mode)
+  def bit_set(mask, index)
+    @data |= bit(index) << mask_lshift_width(mask)
+  end
+
+  def write(mask, data)
+    @data |= (data & mask)
+  end
+
+  def data(mask)
+    return (@data & mask) >> mask_lshift_width(mask)
+  end
+
+  def packed(mask)
+    return [self.data(mask).to_s(16)].pack("H*")
+  end
+
+  def op(op, mask, operand)
+    val = nil
+    case operand
+      when Bitfield then val = operand.data(mask)
+      when Integer then val = operand
+      else raise 'Hell'
     end
+
+    def operate(operator, v1, v2)
+      v3 = nil
+      case operator
+        when :xor then v3 = v2 ^ v1
+        when :or  then v3 = v2 | v1
+        when :and then v3 = v2 & v1
+        when :add then v3 = v2 + v1
+        when :sub then v3 = v2 - v1
+        when :mul then v3 = v2 * v1
+        when :div then v3 = v2 / v1
+      end
+      return v3
+    end
+
+    shift = mask_lshift_width(mask)
+    @data = (
+      @data & (@mask ^ mask)
+    ) | (
+      mask & ( operate(op, val, data(mask)) ) << shift
+    )
+
     return self
   end
 
-  def and(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data &= bitfield.data(mode)
-    else
-      @data &= bitfield & mask(mode)
-    end
-    return self
-  end
-
-  def or(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data |= bitfield.data(mode)
-    else
-      @data |= bitfield & mask(mode)
-    end
-    return self
-  end
-
-  def add(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data += bitfield.data(mode)
-    else
-      @data += bitfield & mask(mode)
-    end
-    #@data &= ((1 << mode) - 1)
-    return self
-  end
-
-  def sub(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data -= bitfield.data(mode)
-    else
-      @data -= bitfield & mask(mode)
-    end
-    #@data &= ((1 << mode) - 1)
-    return self
-  end
-
-  def mul(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data *= bitfield.data(mode)
-    else
-      @data *= bitfield & mask(mode)
-    end
-    #@data &= ((1 << mode) - 1)
-    return self
-  end
-
-  def div(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data /= bitfield.data(mode)
-    else
-      @data /= bitfield & mask(mode)
-    end
-    #@data &= ((1 << mode) - 1)
-    return self
-  end
-
-  def inc(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data += bitfield.data(mode)
-    else
-      @data += bitfield & mask(mode)
-    end
-    #@data &= ((1 << mode) - 1)
-    return self
-  end
-
-  def dec(mode, bitfield)
-    if bitfield.is_a? Bitfield
-      @data -= bitfield.data(mode)
-    else
-      @data -= bitfield & mask(mode)
-    end
-    #@data &= ((1 << mode) - 1)
-    return self
-  end
+  def xor(mask, operand) return op(:xor, mask, operand) end
+  def  or(mask, operand) return op(:or , mask, operand) end
+  def and(mask, operand) return op(:and, mask, operand) end
+  def add(mask, operand) return op(:add, mask, operand) end
+  def sub(mask, operand) return op(:sub, mask, operand) end
+  def mul(mask, operand) return op(:mul, mask, operand) end
+  def div(mask, operand) return op(:div, mask, operand) end
 end
