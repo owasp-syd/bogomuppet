@@ -20,19 +20,20 @@ class Processor
     Register.mem   = @mem
 
     @eflags = EFLAGS.new
+    @flags  = @eflags[:flags]
 
-    @eip = EIP.new
+    @eip = EIP.new; @ax = @eip[:ip];
 
-    @ebp = EBP.new; @ebp.write(0xFFFF0000)
-    @esp = ESP.new; @esp.write(0xFFFF0000)
+    @ebp = EBP.new; @bp = @ebp[:bp]; @ebp.write(0xFFFF0000)
+    @esp = ESP.new; @sp = @esp[:sp]; @esp.write(0xFFFF0000)
 
     @eax = EAX.new; @ax = @eax[:ax]; @al = @eax[:al]; @ah = @eax[:ah]
     @ebx = EBX.new; @bx = @ebx[:bx]; @bl = @ebx[:bl]; @bh = @ebx[:bh]
     @ecx = ECX.new; @cx = @ecx[:cx]; @cl = @ecx[:cl]; @ch = @ecx[:ch]
     @edx = EDX.new; @dx = @edx[:dx]; @dl = @edx[:dl]; @dh = @edx[:dh]
 
-    @esi = ESI.new
-    @edi = EDI.new
+    @esi = ESI.new; @si = @esi[:si]
+    @edi = EDI.new; @di = @edi[:di]
   end
 
   def eax=(data) @eax.write(data) end

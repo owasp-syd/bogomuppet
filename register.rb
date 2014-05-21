@@ -196,30 +196,39 @@ end
 #. }=-
 
 #. Concrete Register Implementations
-#. EFLAGS -={
+#. FLAGS -={
 class EFLAGS < Register
   def initialize
     super(:EFLAGS, 0x20)
     @flags = [
-      Flag.new(self, 0x00000001, :cf,   :s, 'carry flag'),
-      Flag.new(self, 0x00000004, :pf,   :s, 'parity flag'),
-      Flag.new(self, 0x00000010, :af,   :s, 'auxiliary carry flag'),
-      Flag.new(self, 0x00000040, :zf,   :s, 'zero flag'),
-      Flag.new(self, 0x00000080, :sf,   :s, 'sign flag'),
-      Flag.new(self, 0x00000100, :tf,   :x, 'trap flag'),
-      Flag.new(self, 0x00000200, :if,   :x, 'interrupt enable flag'),
-      Flag.new(self, 0x00000400, :df,   :c, 'direction flag'),
-      Flag.new(self, 0x00000800, :of,   :s, 'overflow flag'),
-      Flag.new(self, 0x00003000, :iopl, :x, 'i/o pivilege level'),
-      Flag.new(self, 0x00004000, :nt,   :x, 'nested task'),
-      Flag.new(self, 0x00010000, :rf,   :x, 'resume flag'),
-      Flag.new(self, 0x00020000, :vm,   :x, 'virtual 8080 mode'),
-      Flag.new(self, 0x00040000, :ac,   :x, 'alignment check'),
-      Flag.new(self, 0x00080000, :vif,  :x, 'virtual interrupt flag'),
-      Flag.new(self, 0x00100000, :vip,  :x, 'virtual interrupt pending'),
-      Flag.new(self, 0x00200000, :id,   :x, 'id flag'),
+      Flag.new(self, 0x00000001, :cf,   :status,  'carry flag'),
+      Flag.new(self, 0x00000004, :pf,   :status,  'parity flag'),
+      Flag.new(self, 0x00000010, :af,   :status,  'auxiliary carry flag'),
+      Flag.new(self, 0x00000040, :zf,   :status,  'zero flag'),
+      Flag.new(self, 0x00000080, :sf,   :status,  'sign flag'),
+      Flag.new(self, 0x00000100, :tf,   :system,  'trap flag'),
+      Flag.new(self, 0x00000200, :if,   :system,  'interrupt enable flag'),
+      Flag.new(self, 0x00000400, :df,   :control, 'direction flag'),
+      Flag.new(self, 0x00000800, :of,   :status,  'overflow flag'),
+      Flag.new(self, 0x00003000, :iopl, :system,  'i/o pivilege level'),
+      Flag.new(self, 0x00004000, :nt,   :system,  'nested task'),
+      Flag.new(self, 0x00010000, :rf,   :system,  'resume flag'),
+      Flag.new(self, 0x00020000, :vm,   :system,  'virtual 8080 mode'),
+      Flag.new(self, 0x00040000, :ac,   :system,  'alignment check'),
+      Flag.new(self, 0x00080000, :vif,  :system,  'virtual interrupt flag'),
+      Flag.new(self, 0x00100000, :vip,  :system,  'virtual interrupt pending'),
+      Flag.new(self, 0x00200000, :id,   :system,  'id flag'),
     ]
     write(0x2)
+
+    @_flags = self.register(:FLAGS, 0xFFFF)
+  end
+
+  def [](subregister)
+    case subregister
+      when :flags then return @_flags
+      else raise 'Hell'
+    end
   end
 end
 #. }=-
@@ -227,12 +236,11 @@ end
 #. General Registers
 #. AX - Accumulator Registers -={
 class EAX < Register
-
   def initialize
     super(:EAX, 0x20)
-    @ax      = self.register(:AX, 0xFFFF)
-    @al      = self.register(:AL, 0x00FF)
-    @ah      = self.register(:AH, 0xFF00)
+    @ax = self.register(:AX, 0xFFFF)
+    @al = self.register(:AL, 0x00FF)
+    @ah = self.register(:AH, 0xFF00)
   end
 
   def [](subregister)
@@ -249,9 +257,9 @@ end
 class EBX < Register
   def initialize
     super(:EBX, 0x20)
-    @bx      = self.register(:BX, 0xFFFF)
-    @bl      = self.register(:BL, 0x00FF)
-    @bh      = self.register(:BH, 0xFF00)
+    @bx = self.register(:BX, 0xFFFF)
+    @bl = self.register(:BL, 0x00FF)
+    @bh = self.register(:BH, 0xFF00)
   end
 
   def [](subregister)
@@ -268,9 +276,9 @@ end
 class ECX < Register
   def initialize
     super(:ECX, 0x20)
-    @cx      = self.register(:CX, 0xFFFF)
-    @cl      = self.register(:CL, 0x00FF)
-    @ch      = self.register(:CH, 0xFF00)
+    @cx = self.register(:CX, 0xFFFF)
+    @cl = self.register(:CL, 0x00FF)
+    @ch = self.register(:CH, 0xFF00)
   end
 
   def [](subregister)
@@ -287,9 +295,9 @@ end
 class EDX < Register
   def initialize
     super(:EDX, 0x20)
-    @dx      = self.register(:DX, 0xFFFF)
-    @dl      = self.register(:DL, 0x00FF)
-    @dh      = self.register(:DH, 0xFF00)
+    @dx = self.register(:DX, 0xFFFF)
+    @dl = self.register(:DL, 0x00FF)
+    @dh = self.register(:DH, 0xFF00)
   end
 
   def [](subregister)
@@ -308,6 +316,14 @@ end
 class ESI < Register
   def initialize
     super(:ESI, 0x20)
+    @si = self.register(:SI, 0xFFFF)
+  end
+
+  def [](subregister)
+    case subregister
+      when :si then return @si
+      else raise 'Hell'
+    end
   end
 end
 #. }=-
@@ -315,6 +331,14 @@ end
 class EDI < Register
   def initialize
     super(:EDI, 0x20)
+    @di = self.register(:DI, 0xFFFF)
+  end
+
+  def [](subregister)
+    case subregister
+      when :di then return @di
+      else raise 'Hell'
+    end
   end
 end
 #. }=-
@@ -348,12 +372,22 @@ class ES < Register
   end
 end
 #. }=-
+#. FS - 80386 PIII only - TODO
+#. GS - 80386 PIII only - TODO
 
 #. Pointer Registers
 #. BP - Base Pointer -={
 class EBP < Register
   def initialize
     super(:EBP, 0x20)
+    @bp = self.register(:BP, 0xFFFF)
+  end
+
+  def [](subregister)
+    case subregister
+      when :bp then return @bp
+      else raise 'Hell'
+    end
   end
 end
 #. }=-
@@ -361,6 +395,14 @@ end
 class ESP < Register
   def initialize
     super(:ESP, 0x20)
+    @sp = self.register(:SP, 0xFFFF)
+  end
+
+  def [](subregister)
+    case subregister
+      when :sp then return @sp
+      else raise 'Hell'
+    end
   end
 end
 #. }=-
@@ -368,6 +410,14 @@ end
 class EIP < Register
   def initialize
     super(:EIP, 0x20)
+    @ip = self.register(:IP, 0xFFFF)
+  end
+
+  def [](subregister)
+    case subregister
+      when :ip then return @ip
+      else raise 'Hell'
+    end
   end
 end
 #. }=-
