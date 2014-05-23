@@ -8,7 +8,7 @@ require 'minitest/autorun'
 #. Memory -={
 class TestMemory < Minitest::Test
   def setup
-    @cpu = Processor.new
+    @cpu = Intel32.new
     @mem = @cpu.mem
   end
 
@@ -26,7 +26,7 @@ end
 #. Processor:Registers -={
 class TestSubRegisters < Minitest::Test
   def setup
-    @cpu = Processor.new
+    @cpu = Intel32.new
   end
 
   def test_gpr
@@ -52,7 +52,7 @@ end
 
 class TestMath < Minitest::Test
   def setup
-    @cpu = Processor.new
+    @cpu = Intel32.new
   end
 
   def test_xor
@@ -143,7 +143,7 @@ end
 #. Processor:Stack -={
 class TestStack < Minitest::Test
   def setup
-    @cpu = Processor.new
+    @cpu = Intel32.new
 
     @esp = @cpu.esp
     @ebp = @cpu.ebp
@@ -189,7 +189,7 @@ end
 #. Processor:Instructions -={
 class TestProcessor < Minitest::Test
   def setup
-    @cpu = Processor.new
+    @cpu = Intel32.new
     @mem = @cpu.mem
     @eax = @cpu.eax
     @ebx = @cpu.ebx

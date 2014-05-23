@@ -13,29 +13,6 @@ class Processor
 
   attr_accessor :mem, :eflags
 
-  def initialize
-    @arch  = IA32.new
-    @mem   = Memory.new @arch
-
-    Register.mem   = @mem
-
-    @eflags = EFLAGS.new
-    @flags  = @eflags[:flags]
-
-    @eip = EIP.new; @ax = @eip[:ip];
-
-    @ebp = EBP.new; @bp = @ebp[:bp]; @ebp.write(0xFFFF0000)
-    @esp = ESP.new; @sp = @esp[:sp]; @esp.write(0xFFFF0000)
-
-    @eax = EAX.new; @ax = @eax[:ax]; @al = @eax[:al]; @ah = @eax[:ah]
-    @ebx = EBX.new; @bx = @ebx[:bx]; @bl = @ebx[:bl]; @bh = @ebx[:bh]
-    @ecx = ECX.new; @cx = @ecx[:cx]; @cl = @ecx[:cl]; @ch = @ecx[:ch]
-    @edx = EDX.new; @dx = @edx[:dx]; @dl = @edx[:dl]; @dh = @edx[:dh]
-
-    @esi = ESI.new; @si = @esi[:si]
-    @edi = EDI.new; @di = @edi[:di]
-  end
-
   def eax=(data) @eax.write(data) end
   def ebx=(data) @ebx.write(data) end
   def ecx=(data) @ecx.write(data) end
@@ -48,6 +25,34 @@ class Processor
   def ebp=(data) @ebp.write(data) end
 
   def eflags=(data) @eflags.write(data) end
+
+  def to_s
+    return "#{@esp.addr}: #{@esp.read(1)}"
+  end
+end
+
+class Intel32 < Processor
+  def initialize
+    @arch  = IA32.new
+    @mem   = Memory.new @arch
+    Register.mem = @mem
+
+    @eflags = EFLAGS.new
+    @flags  = @eflags[:flags]
+
+    @eip = EIP.new; @ip = @eip[:ip];
+
+    @ebp = EBP.new; @bp = @ebp[:bp]; @ebp.write(0xFFFF0000)
+    @esp = ESP.new; @sp = @esp[:sp]; @esp.write(0xFFFF0000)
+
+    @eax = EAX.new; @ax = @eax[:ax]; @al = @eax[:al]; @ah = @eax[:ah]
+    @ebx = EBX.new; @bx = @ebx[:bx]; @bl = @ebx[:bl]; @bh = @ebx[:bh]
+    @ecx = ECX.new; @cx = @ecx[:cx]; @cl = @ecx[:cl]; @ch = @ecx[:ch]
+    @edx = EDX.new; @dx = @edx[:dx]; @dl = @edx[:dl]; @dh = @edx[:dh]
+
+    @esi = ESI.new; @si = @esi[:si]
+    @edi = EDI.new; @di = @edi[:di]
+  end
 
   def mov(dst, src)
     dst.write(src, dst.size)
@@ -76,7 +81,37 @@ class Processor
     @esp += @arch.bytes
   end
 
-  def to_s
-    return "#{@esp.addr}: #{@esp.read(1)}"
+end
+
+class Intel64 < Processor
+  def initialize
+    @arch  = IA64.new
+    @mem   = Memory.new @arch
+    Register.mem = @mem
+
+    @rflags = RFLAGS.new
+    @flags  = @rflags[:flags]
+
+    @rip = RIP.new; @eip = @rip[:eip]; @ip = @rip[:ip];
+
+    @rbp = RBP.new; @ebp = @rip[:ebp]; @bp = @rbp[:bp]; @rbp.write(0xFFFFFFFF00000000)
+    @rsp = RSP.new; @esp = @rip[:esp]; @sp = @rsp[:sp]; @rsp.write(0xFFFFFFFF00000000)
+
+    @rax = RAX.new; @eap = @rip[:eax]; @ax = @rax[:ax]; @al = @rax[:al]; @ah = @rax[:ah]
+    @rbx = RBX.new; @ebp = @rip[:ebx]; @bx = @rbx[:bx]; @bl = @rbx[:bl]; @bh = @rbx[:bh]
+    @rcx = RCX.new; @ecp = @rip[:ecx]; @cx = @rcx[:cx]; @cl = @rcx[:cl]; @ch = @rcx[:ch]
+    @rdx = RDX.new; @edp = @rip[:edx]; @dx = @rdx[:dx]; @dl = @rdx[:dl]; @dh = @rdx[:dh]
+
+    @rsi = RSI.new; @esp = @rip[:esi]; @si = @rsi[:si]; @sil = @rsi[:sil]
+    @rdi = RDI.new; @edp = @rip[:edi]; @si = @rsi[:si]; @dil = @rdi[:dil]
+
+    @r8  = R8.new;  @r8d  = R8D[:r8d];   @r8d  = R8D[:r8w];   @r8d  = R8D[:r8b]
+    @r9  = R9.new;  @r9d  = R9D[:r9d];   @r9d  = R9D[:r9w];   @r9d  = R9D[:r9b]
+    @r10 = R10.new; @r10d = R10D[:r10d]; @r10d = R10D[:r10w]; @r10d = R10D[:r10b]
+    @r11 = R11.new; @r11d = R11D[:r11d]; @r11d = R11D[:r11w]; @r11d = R11D[:r11b]
+    @r12 = R12.new; @r12d = R12D[:r12d]; @r12d = R12D[:r12w]; @r12d = R12D[:r12b]
+    @r13 = R13.new; @r13d = R13D[:r13d]; @r13d = R13D[:r13w]; @r13d = R13D[:r13b]
+    @r14 = R14.new; @r14d = R14D[:r14d]; @r14d = R14D[:r14w]; @r14d = R14D[:r14b]
+    @r15 = R15.new; @r15d = R15D[:r15d]; @r15d = R15D[:r15w]; @r15d = R15D[:r15b]
   end
 end
