@@ -1,0 +1,3 @@
+#!/usr/bin/perl
+
+print "\x68\x00\x00\x00\x00"
