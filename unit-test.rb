@@ -4,64 +4,6 @@ require_relative 'memory'
 
 require 'minitest/autorun'
 
-class TestJumps < Minitest::Test
-	def setup
-		@cpu = Processor.new
-		@mem = @cpu.mem
-	end
-
-	def test_jmp
-		@cpu.jump 0x00401000
-		assert_equal 0x00401000,@cpu.eip.read
-	end
-
-	def test_jumpregister
-		@cpu.eax = 0x00401000
-		@cpu.jump @cpu.eax
-		assert_equal 0x00401000,@cpu.eip.read
-	end
-
-	def test_call
-		@cpu.esp = 0x1000
-		@cpu.call 0x0040100
-		assert_equal 0x0040100,@cpu.eip.read
-		assert_equal 0xFFC,@cpu.esp.read
-	end
-	
-	def test_callregister
-		@cpu.esp = 0x1000
-		@cpu.eax = 0x00401000
-		@cpu.call @cpu.eax
-		assert_equal 0x0040100,@cpu.eip.read
-		assert_equal 0xFFC,@cpu.esp.read
-	end
-
-	def test_conditionaljump_failure
-		@cpu.eax = 0x1
-		@cpu.ebx = 0x2
-		@cpu.cmp @cpu.eax, @cpu.ebx
-		@cpu.je 0x1000
-		assert_not_equal 0x1000,@cpu.eip.read 
-	end
-
-	def test_conditionaljump_success
-		@cpu.eax = 0x1
-		@cpu.ebx = 0x1
-		@cpu.cmp @cpu.eax, @cpu.ebx
-		@cpu.je 0x1000
-		assert_equal 0x1000,@cpu.eip.read
-	end
-
-	def test_ja	
-		@cpu.eax = 0x4
-		@cpu.ebx = 0x5
-		@cpu.cmp @cpu.eax,@cpu.ebx
-		@cpu.ja 0x1000
-		assert_not_equal 0x1000,@cpu.eip.read
-	end
-
-end
-
 #. Tests -={
 #. Memory -={
 class TestMemory < Minitest::Test
@@ -248,6 +190,7 @@ end
 class TestProcessor < Minitest::Test
   def setup
     @cpu = Intel32.new
+    @mem = @cpu.mem
   end
 
   def test_mov
@@ -308,6 +251,51 @@ class TestProcessor < Minitest::Test
     @cpu.sub @cpu.eax, @cpu.ebx
     assert_equal 0x2, @cpu.eax.read
   end
+
+  def _test_jmp
+    @cpu.jmp 0x00401000
+    assert_equal 0x00401000,@cpu.eip.read
+
+    @cpu.eax = 0x00401000
+    @cpu.jmp @cpu.eax
+    assert_equal 0x00401004, @cpu.eip.read
+  end
+
+  def _test_call
+    @cpu.esp = 0x1000
+    @cpu.call 0x00401000
+    assert_equal 0x00401000, @cpu.eip.read
+    assert_equal 0x0FFC, @cpu.esp.read
+
+    @cpu.esp = 0x1000
+    @cpu.eax = 0x00401000
+    @cpu.call @cpu.eax
+    assert_equal 0x00401000, @cpu.eip.read
+    assert_equal 0x0FFC, @cpu.esp.read
+  end
+
+  def _test_je
+    @cpu.eax = 0x1
+    @cpu.ebx = 0x2
+    @cpu.cmp @cpu.eax, @cpu.ebx
+    @cpu.je 0x1000
+    assert_not_equal 0x1000, @cpu.eip.read
+
+    @cpu.eax = 0x1
+    @cpu.ebx = 0x1
+    @cpu.cmp @cpu.eax, @cpu.ebx
+    @cpu.je 0x1000
+    assert_equal 0x1000,@cpu.eip.read
+  end
+
+  def _test_ja
+    @cpu.eax = 0x4
+    @cpu.ebx = 0x5
+    @cpu.cmp @cpu.eax,@cpu.ebx
+    @cpu.ja 0x1000
+    assert_not_equal 0x1000,@cpu.eip.read
+  end
 end
+
 #. }=-
 #. }=-
