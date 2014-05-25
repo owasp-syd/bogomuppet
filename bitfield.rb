@@ -26,7 +26,9 @@ class Bitfield
     @data |= bit(index) << mask_lshift_width(mask)
   end
 
-  def write(mask, data)
+  def write(data, mask)
+    data <<= mask_lshift_width(mask)
+    @data &= (@mask ^ mask)
     @data |= (data & mask)
   end
 

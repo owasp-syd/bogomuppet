@@ -3,27 +3,38 @@ require_relative 'memory'
 require_relative 'register'
 
 class Processor
-  attr_accessor :eax, :ax, :al, :ah
-  attr_accessor :ebx, :bx, :bl, :bh
-  attr_accessor :ecx, :cx, :cl, :ch
-  attr_accessor :edx, :dx, :dl, :dh
+  attr_reader :mem
 
-  attr_accessor :esi, :edi
-  attr_accessor :ebp, :esp
-
-  attr_accessor :mem, :eflags
-
+  attr_reader :eax, :ax, :al, :ah
+  attr_reader :ebx, :bx, :bl, :bh
+  attr_reader :ecx, :cx, :cl, :ch
+  attr_reader :edx, :dx, :dl, :dh
   def eax=(data) @eax.write(data) end
   def ebx=(data) @ebx.write(data) end
   def ecx=(data) @ecx.write(data) end
   def edx=(data) @edx.write(data) end
+  def ax=(data) @ax.write(data) end
+  def bx=(data) @bx.write(data) end
+  def cx=(data) @cx.write(data) end
+  def dx=(data) @dx.write(data) end
+  def ah=(data) @ah.write(data) end
+  def bh=(data) @bh.write(data) end
+  def ch=(data) @ch.write(data) end
+  def dh=(data) @dh.write(data) end
+  def al=(data) @al.write(data) end
+  def bl=(data) @bl.write(data) end
+  def cl=(data) @cl.write(data) end
+  def dl=(data) @dl.write(data) end
 
+  attr_reader :esi, :edi
   def esi=(data) @esi.write(data) end
   def edi=(data) @edi.write(data) end
 
+  attr_reader :ebp, :esp
   def esp=(data) @esp.write(data) end
   def ebp=(data) @ebp.write(data) end
 
+  attr_reader :eflags
   def eflags=(data) @eflags.write(data) end
 
   def to_s
@@ -55,7 +66,29 @@ class Intel32 < Processor
   end
 
   def mov(dst, src)
-    dst.write(src, dst.size)
+    if dst.is_a? Register
+      case src
+        when Register then dst.write(src)
+        when Pointer then dst.write(src)
+        when Integer then dst.write(src)
+        else raise :Jest
+      end
+    elsif dst.is_a? Pointer
+      case src
+        when Register then dst.write(src)
+        when Integer then dst.write(src)
+        when String then dst.write(src)
+        else raise :Jest
+      end
+    end
+  end
+
+  def add(dst, src)
+    dst += src
+  end
+
+  def sub(dst, src)
+    dst -= src
   end
 
   def push(data)

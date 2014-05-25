@@ -190,31 +190,65 @@ end
 class TestProcessor < Minitest::Test
   def setup
     @cpu = Intel32.new
-    @mem = @cpu.mem
-    @eax = @cpu.eax
-    @ebx = @cpu.ebx
   end
 
   def test_mov
-    #. mov <reg>, <const>
-    @cpu.mov @eax, 0x51525355
-    assert_equal 0x51525355, @eax.read
+    #. mov <reg>, <imm>
+    @cpu.mov @cpu.eax, 0x51525355
+    assert_equal 0x51525355, @cpu.eax.read
 
     #. mov <reg>, <reg>
-    @cpu.mov @ebx, @eax
-    assert_equal 0x51525355, @ebx.read
+    @cpu.mov @cpu.ebx, @cpu.eax
+    assert_equal 0x51525355, @cpu.ebx.read
 
     #. mov <mem>, <reg>
-    @cpu.mov @mem[0xF0FF0000].byte, @ebx
-    assert_equal "\x55\x53\x52\x51", @mem[0xF0FF0000].read(:DWORD)
+    @cpu.mov @cpu.mem[0xF0FF0000].byte, @cpu.ebx
+    assert_equal "\x55\x53\x52\x51", @cpu.mem[0xF0FF0000].read(:DWORD)
 
     #. mov <reg>, <mem>
-    @cpu.mov @eax, @mem[0xF0FF0000].byte
-    assert_equal 0x51525355, @ebx.read
+    @cpu.mov @cpu.eax, @cpu.mem[0xF0FF0000].byte
+    assert_equal 0x51525355, @cpu.ebx.read
 
-    #. mov <mem>, <const>
-    @cpu.mov @mem[0xF0FF0000].byte, 'BABY'
-    assert_equal 'BABY', @mem[0xF0FF0000].read(:DWORD)
+    #. mov <mem>, <imm>
+    @cpu.mov @cpu.mem[0xF0FF0000].byte, 'BABY'
+    assert_equal 'BABY', @cpu.mem[0xF0FF0000].read(:DWORD)
+  end
+
+  def test_add
+    #. add <reg> <imm>
+    @cpu.mov @cpu.eax, 0x80
+    @cpu.add @cpu.eax, 0x91
+    assert_equal 0x111, @cpu.eax.read
+
+    #. add <reg> <reg>
+    @cpu.mov @cpu.eax, 0x34
+    assert_equal 0x34, @cpu.eax.read
+
+    @cpu.mov @cpu.ebx, 0x32
+    assert_equal 0x32, @cpu.ebx.read
+
+    @cpu.add @cpu.eax, @cpu.ebx
+    assert_equal 0x66, @cpu.eax.read
+    assert_equal 0x32, @cpu.ebx.read
+    assert_equal 0x32, @cpu.bx.read
+    assert_equal 0x32, @cpu.bl.read
+  end
+
+  def test_sub
+    #. sub <reg> <imm>
+    @cpu.mov @cpu.eax, 0x80
+    @cpu.sub @cpu.eax, 0x6F
+    assert_equal 0x11, @cpu.eax.read
+
+    #. add <reg> <reg>
+    @cpu.mov @cpu.eax, 0x34
+    assert_equal 0x34, @cpu.eax.read
+
+    @cpu.mov @cpu.ebx, 0x32
+    assert_equal 0x32, @cpu.ebx.read
+
+    @cpu.sub @cpu.eax, @cpu.ebx
+    assert_equal 0x2, @cpu.eax.read
   end
 end
 #. }=-

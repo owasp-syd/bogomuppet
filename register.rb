@@ -10,18 +10,14 @@ require_relative 'flag'
 class Register
   include Comparable
 
-  attr_reader :size
+  attr_reader :size, :mask
 
   class << self
     @@mem = nil
-    def mem=(mem)
-      @@mem = mem
-    end
+    def mem=(mem) @@mem = mem end
 
     @@stack = nil
-    def stack=(stack)
-      @@stack = stack
-    end
+    def stack=(stack) @@stack = stack end
   end
 
   #. Either set size, or bitfield and mask to initialize a Register
@@ -62,18 +58,19 @@ class Register
     return @bitfield.packed(@mask)
   end
 
-  def write(data, junk=nil)
+  def write(data)
     case data
       when Integer
-        @bitfield.write(@mask, data)
+        @bitfield.write(data, @mask)
       when String
-        @bitfield.write(@mask, data[0...@@mem.arch.bytes].unpack('V*').pop)
+        @bitfield.write(data[0...@@mem.arch.bytes].unpack('V*').pop, @mask)
       when Pointer
-        @bitfield.write(@mask, data.addr)
+        @bitfield.write(data.addr, @mask)
       when Register
-        @bitfield.write(@mask, data.read)
+        raise :Jest unless mask_width(data.mask) == mask_width(@mask)
+        @bitfield.write(data.read, data.mask)
       else
-        raise "Junk: #{data}"
+        raise :Jest
     end
   end
 
