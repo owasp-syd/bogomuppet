@@ -16,8 +16,12 @@ class Assembler < Parslet::Parser
     str('eax') | str('ebx') | str('ecx') | str('edx') |
     str('edi') | str('esi') | str('ebp') | str('esp')
   }
-  rule(:segreg)      {
-    str('ds')
+  rule(:regseg)      {
+    (
+      str('cs') |
+      str('ds') | str('ss') | str('es') |
+      str('fs') | str('gs')
+    ).as(:regseg) >> str(':')
   }
   rule(:imm)         { str('0x') >> match('[0-9a-f]').repeat(1) }
   rule(:decimal)     { match('[0-9]').repeat(1) }
@@ -26,6 +30,7 @@ class Assembler < Parslet::Parser
     ( str('BYTE') | str('WORD') | str('DWORD') ) >> ws >> str('PTR')
   }
   rule(:ptrdrf)      {
+    regseg.maybe >>
     str('[') >> (
       (
         reg.as(:reg) | mem
@@ -35,7 +40,7 @@ class Assembler < Parslet::Parser
     ) >> str(']')
   }
   rule(:mem)         {
-    ptrstr >> ws >> ptrdrf.as(:ptr) | segreg.as(:reg) >> str(':') >> imm.as(:imm)
+    ptrstr >> ws >> ptrdrf.as(:ptr) | imm.as(:imm)
   }
   rule(:opsrc)       { reg.as(:reg) | mem | imm.as(:imm) }
   rule(:opdst)       { reg.as(:reg) | mem }
@@ -53,7 +58,11 @@ class Assembler < Parslet::Parser
 end
 
 def get_instructions(inst)
-  %x(
+  data = [
+    "add    DWORD PTR ss:[eax],0x7f1d00",
+  ]
+
+  data += %x(
     objdump -Mintel -d ../multitool/libdis/libdis.so
   ).split("\n").select { |line|
     line.split("\t").count == 3
@@ -62,6 +71,8 @@ def get_instructions(inst)
   }.select { |expr|
     expr =~ /^#{inst.to_s}\s+/
   }
+
+  return data
 end
 
 require 'pp'
