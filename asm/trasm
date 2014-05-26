@@ -1,0 +1,20 @@
+#!/bin/bash
+esp=0x00401000
+while read line; do
+    if [[ ${line} =~ ^[0-9a-fA-F] ]]; then
+        for byte in ${line}; do
+            printf "\x${byte}"
+        done | x86dis -e 0 -s intel | cut -f 2-
+    else
+        echo -e "[BITS 32]\n[ORG ${esp}]\n${line}" > x
+        s=$(/usr/bin/nasm -fith x -l >(cat) | awk 'END{print$3}')
+        IFS='|' read -a d <<< "$({
+            rm -f x
+            while [ ${#s} -gt 0 ]; do
+                printf "\x${s:0:2}"
+                s=${s:2}
+            done
+        } | x86dis -e 0 -s raw)"
+        printf "%s\n" "${d[3]}"
+    fi
+done
