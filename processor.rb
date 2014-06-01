@@ -3,6 +3,9 @@ require_relative 'memory'
 require_relative 'register'
 
 class Processor
+  @@IDT = 0
+  @@IDTLength = 255
+
   attr_reader :mem
 
   attr_reader :eax, :ax, :al, :ah
@@ -65,6 +68,33 @@ class Intel32 < Processor
     @edi = EDI.new; @di = @edi[:di]
   end
 
+  def autosetflags(reg)
+    # Carry     - done, in each arithmetic option using originaldst
+    # Parity    - done, autosetflags
+    # Adjust    - done, see carry
+    # Zero      - done, autosetflags
+    # Sign      - done, check 'add' for size-agnostic method
+    # Direction - done
+    # Overflow  - todo
+
+    if reg.is_a? Register
+      parity = 0
+      resultlsb = reg.bitfield.data(0x000000FF)
+      for i in resultlsb.to_s(2).split('') do
+        parity += 1 if i == '1'
+      end
+
+      #. If the number of bits in the LSB is even, set the parity flag
+      set_pf((parity % 2) == 0)
+
+      #. If the register equates to zero, set the zero flag
+      set_zf(reg == 0)
+
+    else
+      raise 'Only call Processor#autosetflags with a Register'
+    end
+  end
+
   def mov(dst, src)
     if dst.is_a? Register
       case src
@@ -73,6 +103,7 @@ class Intel32 < Processor
         when Integer then dst.write(src)
         else raise :Jest
       end
+      autosetflags(dst)
     elsif dst.is_a? Pointer
       case src
         when Register then dst.write(src)
@@ -84,12 +115,101 @@ class Intel32 < Processor
   end
 
   def add(dst, src)
+    originaldst = dst
     dst += src
+    # If(dst + src > 2 ** dst.size then set_cf(true) else set_cf(false) end
+    set_cf(dst < originaldst)
+
+    # Sign field = lowest nibble
+    set_af(dst.bitfield.data(0xF) < originaldst.bitfield.data(0xF))
+
+    # Set if most significant bit is set
+    set_sf(dst.bitfield.data(2 ** (dst.size - 1)) > 0)
+
+    # When you add two numbers and set a carry flag, the overflow flag must be 1
+    # (add is unsigned)
+    set_of(dst < originaldst)
+
+    autosetflags(dst)
+
+    return dst
   end
 
   def sub(dst, src)
     dst -= src
+
+    autosetflags(dst)
+
+    return dst
   end
+
+  def and(dst, src)
+    dst &= src
+  end
+
+  def or(dst,src)
+    dst |= src
+  end
+
+  def xor(dst, src)
+    dst ^= src
+  end
+
+  def not(dst)
+    dst = ~dst
+  end
+
+  # does this mean give us the signed negative of an unsigned number?
+  def neg(dst)
+    # http://www.cs.fsu.edu/~hawkes/cda3101lects/chap4/negation.html
+    # flip the bits and add 1... what if it's already a two's complemeetn
+    # number?
+    dst ~= dst
+    dst += 1
+  end
+
+  def cld()
+    set_df(false)
+  end
+
+  def std()
+    set_df(true)
+  end
+
+  def stc()
+    set_cf(true)
+  end
+
+  def clc()
+    set_cf(false)
+  end
+
+  # http://x86.renejeschke.de/html/file_module_x86_id_295.html
+  # ULTRAVIOLENCE : should this be implemented in memory.rb for fast
+  # context switching? either way, we can move it around later
+  def lidt(r)
+    newIDTLength_b = @mem[r].read(2)
+    newIDTLength = newIDTLength_b.ord + newIDTLength_b[1].ord * 0x100
+    newIDT = @mem[r + 2].read(4)
+    newIDTVal = newIDT[0].ord + newIDT[1].ord * 0x100 + newIDT[2].ord * 0x10000 + newIDT[3].ord * 0x1000000
+    @IDT = newIDTVal
+    @IDTLength = newIDTLength
+  end
+
+  def sidt(r)
+    # @mem.set(r,[0xFF,0xFE].pack('c*'),2)
+    newIDTLengthBytes = [@IDTLength & 0xFF, (@IDTLength & 0xFF00) / 0x100].pack('c*')
+    newIDTBytes = [@IDT & 0xFF, (@IDT & 0xFF00) / 0x100, (@IDT & 0xFF0000) / 0x10000, (@IDT & 0xFF000000) /
+    @mem[r].write(newIDTLengthBytes,2)
+    @mem[r+2].write(newIDTBytes,4) 
+  end
+
+  #def sidt(r)
+  #  self.IDT = r
+  #end
+
+  # for manual in-out.
+  # http://bochs.sourceforge.net/techspec/PORTS.LST
 
   def push(data)
     #. The push instruction places its operand onto the top of the hardware
@@ -114,6 +234,33 @@ class Intel32 < Processor
     @esp += @arch.bytes
   end
 
+  # carry
+  def set_cf(v)
+  end
+
+  # zero/equal
+  def set_zf(v)
+  end
+
+  # sign
+  def set_sf(v)
+  end
+
+  # parity
+  def set_pf(v)
+  end
+
+  # direction
+  def set_df(v)
+  end
+
+  # auxiliary
+  def set_af(v)
+  end
+
+  # overflow
+  def set_of(v)
+  end
 end
 
 class Intel64 < Processor
