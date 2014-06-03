@@ -156,16 +156,16 @@ class Intel32 < Processor
   end
 
   def not(dst)
+    #. 1's complement
     dst = ~dst
   end
 
   # does this mean give us the signed negative of an unsigned number?
   def neg(dst)
+    #. 2's complement
+
     # http://www.cs.fsu.edu/~hawkes/cda3101lects/chap4/negation.html
-    # flip the bits and add 1... what if it's already a two's complemeetn
-    # number?
-    dst ~= dst
-    dst += 1
+    dst = ~dst + 1
   end
 
   def cld()
