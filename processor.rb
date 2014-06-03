@@ -1,12 +1,14 @@
 require_relative 'arch'
 require_relative 'memory'
 require_relative 'register'
+require_relative 'idt'
 
 class Processor
   @@IDT = 0
   @@IDTLength = 255
 
   attr_reader :mem
+  attr_reader :eip, :ip
 
   attr_reader :eax, :ax, :al, :ah
   attr_reader :ebx, :bx, :bl, :bh
@@ -42,30 +44,6 @@ class Processor
 
   def to_s
     return "#{@esp.addr}: #{@esp.read(1)}"
-  end
-end
-
-class Intel32 < Processor
-  def initialize
-    @arch  = IA32.new
-    @mem   = Memory.new @arch
-    Register.mem = @mem
-
-    @eflags = EFLAGS.new
-    @flags  = @eflags[:flags]
-
-    @eip = EIP.new; @ip = @eip[:ip];
-
-    @ebp = EBP.new; @bp = @ebp[:bp]; @ebp.write(0xFFFF0000)
-    @esp = ESP.new; @sp = @esp[:sp]; @esp.write(0xFFFF0000)
-
-    @eax = EAX.new; @ax = @eax[:ax]; @al = @eax[:al]; @ah = @eax[:ah]
-    @ebx = EBX.new; @bx = @ebx[:bx]; @bl = @ebx[:bl]; @bh = @ebx[:bh]
-    @ecx = ECX.new; @cx = @ecx[:cx]; @cl = @ecx[:cl]; @ch = @ecx[:ch]
-    @edx = EDX.new; @dx = @edx[:dx]; @dl = @edx[:dl]; @dh = @edx[:dh]
-
-    @esi = ESI.new; @si = @esi[:si]
-    @edi = EDI.new; @di = @edi[:di]
   end
 
   def autosetflags(reg)
@@ -184,31 +162,6 @@ class Intel32 < Processor
     set_cf(false)
   end
 
-  # http://x86.renejeschke.de/html/file_module_x86_id_295.html
-  # ULTRAVIOLENCE : should this be implemented in memory.rb for fast
-  # context switching? either way, we can move it around later
-  def lidt(r)
-    newIDTLength_b = @mem[r].read(2)
-    newIDTLength = newIDTLength_b.ord + newIDTLength_b[1].ord * 0x100
-    newIDT = @mem[r + 2].read(4)
-    newIDTVal = newIDT[0].ord + newIDT[1].ord * 0x100 + newIDT[2].ord * 0x10000 + newIDT[3].ord * 0x1000000
-    @IDT = newIDTVal
-    @IDTLength = newIDTLength
-  end
-
-  def sidt(r)
-    # @mem.set(r,[0xFF,0xFE].pack('c*'),2)
-    newIDTLengthBytes = [@IDTLength & 0xFF, (@IDTLength & 0xFF00) / 0x100].pack('c*')
-    newIDTBytes = [
-      @IDT & 0xFF,
-      (@IDT & 0xFF00) / 0x100,
-      (@IDT & 0xFF0000) / 0x10000,
-      (@IDT & 0xFF000000) / 0x1000000
-    ]
-    @mem[r].write(newIDTLengthBytes,2)
-    @mem[r+2].write(newIDTBytes,4)
-  end
-
   #def sidt(r)
   #  self.IDT = r
   #end
@@ -237,6 +190,63 @@ class Intel32 < Processor
     #. specified register or memory location, and then increments SP by 4.
     dst.write(@esp.read(@arch.bytes))
     @esp += @arch.bytes
+  end
+
+
+  # http://x86.renejeschke.de/html/file_module_x86_id_295.html
+  # ULTRAVIOLENCE : should this be implemented in memory.rb for fast
+  # context switching? either way, we can move it around later
+  def lidt(r)
+    newIDTLength_b = @mem[r].read(2)
+    newIDTLength = newIDTLength_b.ord + newIDTLength_b[1].ord * 0x100
+    newIDT = @mem[r + 2].read(4)
+    newIDTVal = newIDT[0].ord + newIDT[1].ord * 0x100 + newIDT[2].ord * 0x10000 + newIDT[3].ord * 0x1000000
+    @IDT = newIDTVal
+    @IDTLength = newIDTLength
+  end
+
+  def sidt(r)
+    # @mem.set(r,[0xFF,0xFE].pack('c*'),2)
+    newIDTLengthBytes = [@IDTLength & 0xFF, (@IDTLength & 0xFF00) / 0x100].pack('c*')
+    newIDTBytes = [
+      @IDT & 0xFF,
+      (@IDT & 0xFF00) / 0x100,
+      (@IDT & 0xFF0000) / 0x10000,
+      (@IDT & 0xFF000000) / 0x1000000
+    ]
+    @mem[r].write(newIDTLengthBytes,2)
+    @mem[r+2].write(newIDTBytes,4)
+  end
+
+  def interrupt(intNum)
+    newIDTPtr = MemPointer.new(@mem,@IDT + intNum * (IDTDescriptor.new.num_bytes))
+    newIDTDescriptor = IDTDescriptor.read(newIDTPtr)
+    @eip = newIDTDescriptor.offset_1 * 0x10000 + newIDTDescriptor.offset_2
+  end
+
+end
+
+class Intel32 < Processor
+  def initialize
+    @arch  = IA32.new
+    @mem   = Memory.new @arch
+    Register.mem = @mem
+
+    @eflags = EFLAGS.new
+    @flags  = @eflags[:flags]
+  
+    @eip = EIP.new; @ip = @eip[:ip];
+
+    @ebp = EBP.new; @bp = @ebp[:bp]; @ebp.write(0xFFFF0000)
+    @esp = ESP.new; @sp = @esp[:sp]; @esp.write(0xFFFF0000)
+
+    @eax = EAX.new; @ax = @eax[:ax]; @al = @eax[:al]; @ah = @eax[:ah]
+    @ebx = EBX.new; @bx = @ebx[:bx]; @bl = @ebx[:bl]; @bh = @ebx[:bh]
+    @ecx = ECX.new; @cx = @ecx[:cx]; @cl = @ecx[:cl]; @ch = @ecx[:ch]
+    @edx = EDX.new; @dx = @edx[:dx]; @dl = @edx[:dl]; @dh = @edx[:dh]
+
+    @esi = ESI.new; @si = @esi[:si]
+    @edi = EDI.new; @di = @edi[:di]
   end
 
   # carry

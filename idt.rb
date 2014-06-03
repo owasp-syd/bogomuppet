@@ -25,23 +25,4 @@ class InterruptDescriptorTable
     end
   end
 
-  def getHandler(intnum)
-    handler = nil
-
-    if intnum + 1 <= @IDTSize
-      interruptHandler = @IDT[intnum]
-      handler = interruptHandler.offset_1 * 0x10000 + interruptHandler.offset_2
-    end
-
-    return handler
-  end
-
-  def dumpIDT
-    if @IDT
-      i = 0
-      for descriptor in @IDT do
-        i += 1
-      end
-    end
-  end
 end
