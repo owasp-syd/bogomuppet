@@ -1,0 +1,14 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bindata (2.1.0)
+    colorize (0.7.3)
+    minitest (4.3.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bindata
+  colorize
+  minitest
