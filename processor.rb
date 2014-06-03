@@ -199,9 +199,14 @@ class Intel32 < Processor
   def sidt(r)
     # @mem.set(r,[0xFF,0xFE].pack('c*'),2)
     newIDTLengthBytes = [@IDTLength & 0xFF, (@IDTLength & 0xFF00) / 0x100].pack('c*')
-    newIDTBytes = [@IDT & 0xFF, (@IDT & 0xFF00) / 0x100, (@IDT & 0xFF0000) / 0x10000, (@IDT & 0xFF000000) /
+    newIDTBytes = [
+      @IDT & 0xFF,
+      (@IDT & 0xFF00) / 0x100,
+      (@IDT & 0xFF0000) / 0x10000,
+      (@IDT & 0xFF000000) / 0x1000000
+    ]
     @mem[r].write(newIDTLengthBytes,2)
-    @mem[r+2].write(newIDTBytes,4) 
+    @mem[r+2].write(newIDTBytes,4)
   end
 
   #def sidt(r)
