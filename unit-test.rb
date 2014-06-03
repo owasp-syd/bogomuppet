@@ -48,6 +48,19 @@ class TestSubRegisters < Minitest::Test
     assert_equal 0xFF, @cpu.bh.read
     assert_equal 0xDD, @cpu.bl.read
   end
+
+  def test_eflags
+    assert_equal 0x0, @cpu.eflags[:iopl].read
+
+    @cpu.eflags[:iopl] = 0x1
+    assert_equal 0x1, @cpu.eflags[:iopl].read
+
+    @cpu.eflags[:iopl] = 0x2
+    assert_equal 0x2, @cpu.eflags[:iopl].read
+
+    @cpu.eflags[:iopl] = 0x3
+    assert_equal 0x3, @cpu.eflags[:iopl].read
+  end
 end
 
 class TestMath < Minitest::Test

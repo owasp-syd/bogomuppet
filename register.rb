@@ -182,7 +182,7 @@ class Register
     s = nil
 
     if @flags.count > 0
-      s = sprintf("%s[%s]", @name.to_s.yellow, (@flags.map { |flag| flag.to_s }.join))
+      s = sprintf("%s[%s]", @name.to_s.yellow, (@flags.map { |fid,flag| flag.to_s }.join))
     else
       s = sprintf("%s[%s]", @name.to_s.yellow, "%0##{@size/16}x".green % self.read)
     end
@@ -197,35 +197,34 @@ end
 class EFLAGS < Register
   def initialize
     super(:EFLAGS, 0x20)
-    @flags = [
-      Flag.new(self, 0x00000001, :cf,   :status,  'carry flag'),
-      Flag.new(self, 0x00000004, :pf,   :status,  'parity flag'),
-      Flag.new(self, 0x00000010, :af,   :status,  'auxiliary carry flag'),
-      Flag.new(self, 0x00000040, :zf,   :status,  'zero flag'),
-      Flag.new(self, 0x00000080, :sf,   :status,  'sign flag'),
-      Flag.new(self, 0x00000100, :tf,   :system,  'trap flag'),
-      Flag.new(self, 0x00000200, :if,   :system,  'interrupt enable flag'),
-      Flag.new(self, 0x00000400, :df,   :control, 'direction flag'),
-      Flag.new(self, 0x00000800, :of,   :status,  'overflow flag'),
-      Flag.new(self, 0x00003000, :iopl, :system,  'i/o pivilege level'),
-      Flag.new(self, 0x00004000, :nt,   :system,  'nested task'),
-      Flag.new(self, 0x00010000, :rf,   :system,  'resume flag'),
-      Flag.new(self, 0x00020000, :vm,   :system,  'virtual 8080 mode'),
-      Flag.new(self, 0x00040000, :ac,   :system,  'alignment check'),
-      Flag.new(self, 0x00080000, :vif,  :system,  'virtual interrupt flag'),
-      Flag.new(self, 0x00100000, :vip,  :system,  'virtual interrupt pending'),
-      Flag.new(self, 0x00200000, :id,   :system,  'id flag'),
-    ]
+    @flags = {
+      cf:    Flag.new(self, 0x00000001, :cf,   :status,  'carry flag'),
+      pf:    Flag.new(self, 0x00000004, :pf,   :status,  'parity flag'),
+      af:    Flag.new(self, 0x00000010, :af,   :status,  'auxiliary carry flag'),
+      zf:    Flag.new(self, 0x00000040, :zf,   :status,  'zero flag'),
+      sf:    Flag.new(self, 0x00000080, :sf,   :status,  'sign flag'),
+      tf:    Flag.new(self, 0x00000100, :tf,   :system,  'trap flag'),
+      if:    Flag.new(self, 0x00000200, :if,   :system,  'interrupt enable flag'),
+      df:    Flag.new(self, 0x00000400, :df,   :control, 'direction flag'),
+      of:    Flag.new(self, 0x00000800, :of,   :status,  'overflow flag'),
+      iopl:  Flag.new(self, 0x00003000, :iopl, :system,  'i/o pivilege level'),
+      nt:    Flag.new(self, 0x00004000, :nt,   :system,  'nested task'),
+      rf:    Flag.new(self, 0x00010000, :rf,   :system,  'resume flag'),
+      vm:    Flag.new(self, 0x00020000, :vm,   :system,  'virtual 8080 mode'),
+      ac:    Flag.new(self, 0x00040000, :ac,   :system,  'alignment check'),
+      vif:   Flag.new(self, 0x00080000, :vif,  :system,  'virtual interrupt flag'),
+      vip:   Flag.new(self, 0x00100000, :vip,  :system,  'virtual interrupt pending'),
+      id:    Flag.new(self, 0x00200000, :id,   :system,  'id flag'),
+    }
     write(0x2)
-
-    @_flags = self.register(:FLAGS, 0xFFFF)
   end
 
-  def [](subregister)
-    case subregister
-      when :flags then return @_flags
-      else raise 'Hell'
-    end
+  def []=(flag, value)
+    @flags[flag].write(value)
+  end
+
+  def [](flag)
+    return @flags[flag]
   end
 end
 #. }=-

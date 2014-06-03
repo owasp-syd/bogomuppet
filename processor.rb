@@ -8,39 +8,6 @@ class Processor
   @@IDTLength = 255
 
   attr_reader :mem
-  attr_reader :eip, :ip
-
-  attr_reader :eax, :ax, :al, :ah
-  attr_reader :ebx, :bx, :bl, :bh
-  attr_reader :ecx, :cx, :cl, :ch
-  attr_reader :edx, :dx, :dl, :dh
-  def eax=(data) @eax.write(data) end
-  def ebx=(data) @ebx.write(data) end
-  def ecx=(data) @ecx.write(data) end
-  def edx=(data) @edx.write(data) end
-  def ax=(data) @ax.write(data) end
-  def bx=(data) @bx.write(data) end
-  def cx=(data) @cx.write(data) end
-  def dx=(data) @dx.write(data) end
-  def ah=(data) @ah.write(data) end
-  def bh=(data) @bh.write(data) end
-  def ch=(data) @ch.write(data) end
-  def dh=(data) @dh.write(data) end
-  def al=(data) @al.write(data) end
-  def bl=(data) @bl.write(data) end
-  def cl=(data) @cl.write(data) end
-  def dl=(data) @dl.write(data) end
-
-  attr_reader :esi, :edi
-  def esi=(data) @esi.write(data) end
-  def edi=(data) @edi.write(data) end
-
-  attr_reader :ebp, :esp
-  def esp=(data) @esp.write(data) end
-  def ebp=(data) @ebp.write(data) end
-
-  attr_reader :eflags
-  def eflags=(data) @eflags.write(data) end
 
   def to_s
     return "#{@esp.addr}: #{@esp.read(1)}"
@@ -63,13 +30,12 @@ class Processor
       end
 
       #. If the number of bits in the LSB is even, set the parity flag
-      set_pf((parity % 2) == 0)
+      @eflags[:pf] = ((parity % 2) == 0) ? 0x1 : 0x0
 
       #. If the register equates to zero, set the zero flag
-      set_zf(reg == 0)
-
+      @eflags[:zf] = (reg == 0) ? 0x1 : 0x0
     else
-      raise 'Only call Processor#autosetflags with a Register'
+      raise :Hell
     end
   end
 
@@ -93,20 +59,21 @@ class Processor
   end
 
   def add(dst, src)
-    originaldst = dst
+    odst = dst
     dst += src
+
     # If(dst + src > 2 ** dst.size then set_cf(true) else set_cf(false) end
-    set_cf(dst < originaldst)
+    @eflags[:cf] = (dst < odst) ? 0x1 : 0x0
 
     # Sign field = lowest nibble
-    set_af(dst.bitfield.data(0xF) < originaldst.bitfield.data(0xF))
+    @eflags[:af] = (dst.bitfield.data(0xF) < odst.bitfield.data(0xF)) ? 0x1 : 0x0
 
     # Set if most significant bit is set
-    set_sf(dst.bitfield.data(2 ** (dst.size - 1)) > 0)
+    @eflags[:sf] = (dst.bitfield.data(2 ** (dst.size - 1)) > 0) ? 0x1 : 0x0
 
     # When you add two numbers and set a carry flag, the overflow flag must be 1
     # (add is unsigned)
-    set_of(dst < originaldst)
+    @eflags[:of] = (dst < odst) ? 0x1 : 0x0
 
     autosetflags(dst)
 
@@ -121,46 +88,22 @@ class Processor
     return dst
   end
 
-  def and(dst, src)
-    dst &= src
-  end
+  def and(dst, src) dst &= src end
+  def or (dst, src) dst |= src end
 
-  def or(dst,src)
-    dst |= src
-  end
+  def xor(dst, src) dst ^= src end
 
-  def xor(dst, src)
-    dst ^= src
-  end
-
-  def not(dst)
-    #. 1's complement
-    dst = ~dst
-  end
-
-  # does this mean give us the signed negative of an unsigned number?
-  def neg(dst)
-    #. 2's complement
+  #. 1's complement
+  def not(dst) dst = ~dst end
 
     # http://www.cs.fsu.edu/~hawkes/cda3101lects/chap4/negation.html
-    dst = ~dst + 1
-  end
+  #. 2's complement
+  def neg(dst) dst = ~dst + 1 end
 
-  def cld()
-    set_df(false)
-  end
-
-  def std()
-    set_df(true)
-  end
-
-  def stc()
-    set_cf(true)
-  end
-
-  def clc()
-    set_cf(false)
-  end
+  def std() @eflags[:df] = 0x1 end
+  def cld() @eflags[:df] = 0x0 end
+  def stc() @eflags[:cf] = 0x1 end
+  def clc() @eflags[:cf] = 0x0 end
 
   #def sidt(r)
   #  self.IDT = r
@@ -192,7 +135,6 @@ class Processor
     @esp += @arch.bytes
   end
 
-
   # http://x86.renejeschke.de/html/file_module_x86_id_295.html
   # ULTRAVIOLENCE : should this be implemented in memory.rb for fast
   # context switching? either way, we can move it around later
@@ -223,10 +165,46 @@ class Processor
     newIDTDescriptor = IDTDescriptor.read(newIDTPtr)
     @eip = newIDTDescriptor.offset_1 * 0x10000 + newIDTDescriptor.offset_2
   end
-
 end
 
 class Intel32 < Processor
+  attr_reader :eflags
+  def eflags=(data) @eflags.write(data) end
+
+  attr_reader :eip, :ip
+
+  attr_reader :ebp, :esp
+  def esp=(data) @esp.write(data) end
+  def ebp=(data) @ebp.write(data) end
+
+  attr_reader :esi, :edi
+  def esi=(data) @esi.write(data) end
+  def edi=(data) @edi.write(data) end
+
+  attr_reader :eax, :ax, :al, :ah
+  def eax=(data) @eax.write(data) end
+  def ax=(data) @ax.write(data) end
+  def ah=(data) @ah.write(data) end
+  def al=(data) @al.write(data) end
+
+  attr_reader :ebx, :bx, :bl, :bh
+  def ebx=(data) @ebx.write(data) end
+  def bx=(data) @bx.write(data) end
+  def bh=(data) @bh.write(data) end
+  def bl=(data) @bl.write(data) end
+
+  attr_reader :ecx, :cx, :cl, :ch
+  def ecx=(data) @ecx.write(data) end
+  def cx=(data) @cx.write(data) end
+  def ch=(data) @ch.write(data) end
+  def cl=(data) @cl.write(data) end
+
+  attr_reader :edx, :dx, :dl, :dh
+  def edx=(data) @edx.write(data) end
+  def dx=(data) @dx.write(data) end
+  def dh=(data) @dh.write(data) end
+  def dl=(data) @dl.write(data) end
+
   def initialize
     @arch  = IA32.new
     @mem   = Memory.new @arch
@@ -234,7 +212,7 @@ class Intel32 < Processor
 
     @eflags = EFLAGS.new
     @flags  = @eflags[:flags]
-  
+
     @eip = EIP.new; @ip = @eip[:ip];
 
     @ebp = EBP.new; @bp = @ebp[:bp]; @ebp.write(0xFFFF0000)
@@ -247,34 +225,6 @@ class Intel32 < Processor
 
     @esi = ESI.new; @si = @esi[:si]
     @edi = EDI.new; @di = @edi[:di]
-  end
-
-  # carry
-  def set_cf(v)
-  end
-
-  # zero/equal
-  def set_zf(v)
-  end
-
-  # sign
-  def set_sf(v)
-  end
-
-  # parity
-  def set_pf(v)
-  end
-
-  # direction
-  def set_df(v)
-  end
-
-  # auxiliary
-  def set_af(v)
-  end
-
-  # overflow
-  def set_of(v)
   end
 end
 

@@ -19,14 +19,18 @@ class Flag
     @pend = @pstart + @size - 1
   end
 
-  def value
+  def write(value)
+    @register.bitfield.write(value, @mask)
+  end
+
+  def read
     return ((@register.read & @mask) >> mask_lshift_width(@mask)).to_i
   end
 
   def to_s
     i = 0
     s = []
-    self.value.to_s(2).each_char.map { |bit|
+    ("%0#{@size}b" % self.read).each_char.map { |bit|
       c = @name.to_s[i]
       s << (bit == '1' ? c.upcase.bold : c.downcase)
       i += 1
