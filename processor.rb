@@ -156,16 +156,16 @@ class Intel32 < Processor
   end
 
   def not(dst)
+    #. 1's complement
     dst = ~dst
   end
 
   # does this mean give us the signed negative of an unsigned number?
   def neg(dst)
+    #. 2's complement
+
     # http://www.cs.fsu.edu/~hawkes/cda3101lects/chap4/negation.html
-    # flip the bits and add 1... what if it's already a two's complemeetn
-    # number?
-    dst ~= dst
-    dst += 1
+    dst = ~dst + 1
   end
 
   def cld()
@@ -199,9 +199,14 @@ class Intel32 < Processor
   def sidt(r)
     # @mem.set(r,[0xFF,0xFE].pack('c*'),2)
     newIDTLengthBytes = [@IDTLength & 0xFF, (@IDTLength & 0xFF00) / 0x100].pack('c*')
-    newIDTBytes = [@IDT & 0xFF, (@IDT & 0xFF00) / 0x100, (@IDT & 0xFF0000) / 0x10000, (@IDT & 0xFF000000) /
+    newIDTBytes = [
+      @IDT & 0xFF,
+      (@IDT & 0xFF00) / 0x100,
+      (@IDT & 0xFF0000) / 0x10000,
+      (@IDT & 0xFF000000) / 0x1000000
+    ]
     @mem[r].write(newIDTLengthBytes,2)
-    @mem[r+2].write(newIDTBytes,4) 
+    @mem[r+2].write(newIDTBytes,4)
   end
 
   #def sidt(r)

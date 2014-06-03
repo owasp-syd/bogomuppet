@@ -42,11 +42,7 @@ class Pointer
   end
 
   def write(data, size=nil)
-    if size == nil
-      return @@mem.set(@addr, data, data.length)
-    else
-      return @@mem.set(@addr, data, size(size))
-    end
+    return @@mem.set(@addr, data, size(size))
   end
 
   def byte

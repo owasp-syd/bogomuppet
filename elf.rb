@@ -4,7 +4,7 @@ require 'bindata'
 class Elf32_Ehdr < BinData::Record
   endian :little
   EI_NIDENT = 16
-  array :e_ident, :initial_length => EI_NIDENT { uint8 }
+  array :e_ident, :initial_length => EI_NIDENT do uint8 end
   uint16 :e_type
   uint16 :e_machine
   uint32 :e_version
