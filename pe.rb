@@ -20,10 +20,10 @@ class IMAGE_DOS_HEADER < BinData::Record
   uint16   :e_cs
   uint16   :e_lfarlc
   uint16   :e_ovno
-  array    :_res, :initial_length => 4 { uint16 }
+  array    :_res, :initial_length => 4 do uint16 end
   uint16   :e_oemid
   uint16   :e_oeminfo
-  array    :e_res2, :initial_length => 10 { uint16 }
+  array    :e_res2, :initial_length => 10 do uint16 end
   uint32   :e_lfanew
 end
 
@@ -96,7 +96,7 @@ class IMAGE_SECTION_HEADER < BinData::Record
   IMAGE_SIZEOF_SHORT_NAME = 8
 
   array    :shortName,
-             :initial_length => IMAGE_SIZEOF_SHORT_NAME { uint8 }
+             :initial_length => IMAGE_SIZEOF_SHORT_NAME do uint8 end
   uint32   :virtualSize
   uint32   :virtualAddress
   uint32   :sizeOfRawData
@@ -113,14 +113,14 @@ class PEFILE < BinData::Record
 
   IMAGE_DOS_HEADER :dosHeader
   array :dosStub,
-    :initial_length => lambda do
+    :initial_length => lambda {
       dosHeader.e_lfanew - dosStub.abs_offset
-    end { uint8 }
+    } do uint8 end
 
   IMAGE_NT_HEADERS :ntHeaders
   array :sectionHeaders,
     :type => IMAGE_SECTION_HEADER,
-    :initial_length => lambda do
+    :initial_length => lambda {
       ntHeaders.fileHeader.numberOfSections
-    end
+    }
 end
